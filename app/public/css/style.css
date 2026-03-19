@@ -11,7 +11,7 @@ body {
     }
 
     header{
-        background-color:rgb(255, 73, 0);
+        background-color: #216869;
         text-align: center;
         height: 150px;
         color: #000000;
@@ -148,7 +148,7 @@ body {
     section{
         padding: 20px 0px;
         margin: 10px auto;
-        background-color: #f7a98b;
+        background-color: #49A078;
         overflow: hidden;
         border-radius: 10px;
         margin: 5px;
