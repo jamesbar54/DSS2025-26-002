@@ -1,0 +1,92 @@
+Idk where else to put it, but here's the SQL code that I (Harry) have used for setting up the database
+
+NOTE: I'm doing all this in the default "PostgreSQL 18" server that came with my pgadmin install.
+
+----DATABASE----
+
+CREATE DATABASE "DSSwebsiteDB"
+    WITH
+    OWNER = postgres     //this is the default username that's attached to the server and idk if i can change it or if its even needed
+    TEMPLATE = postgres
+    ENCODING = 'UTF8'
+    LOCALE_PROVIDER = 'libc'
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+
+----SCHEMA----
+
+CREATE SCHEMA schema1
+    AUTHORIZATION postgres;
+
+----USER TABLE + ENUM----
+
+CREATE TYPE schema1."userTypeEnum" AS ENUM
+    ('Standard', 'Admin');
+
+ALTER TYPE schema1."userTypeEnum"
+    OWNER TO postgres;
+
+----
+
+CREATE TABLE schema1."UsersTable"
+(
+    "userID" integer NOT NULL,
+    "userName" character varying(32) NOT NULL,
+    "userEmail" character varying(320) NOT NULL,
+    "userPassHash" character varying(64) NOT NULL,
+    "userType" schema1."userTypeEnum" NOT NULL,
+    PRIMARY KEY ("userID")
+);
+
+ALTER TABLE IF EXISTS schema1."UsersTable"
+    OWNER to postgres;
+
+----PASSWORD SALTS TABLE---- //stored in a different table for a bit of extra security
+
+CREATE TABLE schema1."UserPassSaltsTable"
+(
+    "userID" integer NOT NULL references schema1."UsersTable"("userID"),
+    "passSalt" character varying(16) NOT NULL,
+    PRIMARY KEY ("userID")
+);
+
+ALTER TABLE IF EXISTS schema1."UserPassSaltsTable"
+    OWNER to postgres;
+
+----GAME TABLE----
+
+CREATE TABLE schema1."GamesTable"
+(
+    "gameID" integer NOT NULL,
+    "gameName" character varying(128) NOT NULL,
+    "gameDesc" character varying(1024),
+    PRIMARY KEY ("gameID")
+);
+
+ALTER TABLE IF EXISTS schema1."GamesTable"
+    OWNER to postgres;
+
+----POST TABLE + ENUM----
+
+CREATE TYPE schema1."postTypeEnum" AS ENUM
+    ('Standard', 'Review', 'BugReport', 'DevLog');
+
+ALTER TYPE schema1."postTypeEnum"
+    OWNER TO postgres;
+
+----
+
+CREATE TABLE schema1."PostsTable"
+(
+    "postID" integer NOT NULL,
+    "userID" integer NOT NULL references schema1."UsersTable"("userID"),
+    "gameID" integer references schema1."GamesTable"("gameID"),
+    "postType" schema1."postTypeEnum" NOT NULL,
+    "postTitle" character varying(256) NOT NULL,
+    "postContent" character varying(2048),
+    "postReviewScore" integer,
+    PRIMARY KEY ("postID")
+);
+
+ALTER TABLE IF EXISTS schema1."PostsTable"
+    OWNER to postgres;
