@@ -2,6 +2,14 @@ const express = require('express')
 const app = express();
 const port = 3000;
 
+//Database connection
+const { Client } = require('pg');
+const client = new Client({ user: 'postgres', host: 'localhost', database: 'DSSwebsiteDB', password: 'YOUR_PASSWORD', port: '5432', });
+//NOTE: This needs changing so different users can have different passwords set
+
+client.connect() .then(() => { console.log('Connected to PostgreSQL database!'); })
+.catch((err) => { console.error('Error connecting to the database:', err); });
+
 var bodyParser = require('body-parser');
 const fs = require('fs');
 
