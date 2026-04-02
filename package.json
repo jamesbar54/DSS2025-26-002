@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "express": "^4.21.1"
+  },
+  "dependencies": {
+    "pg": "^8.20.0"
   }
 }
