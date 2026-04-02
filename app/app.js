@@ -4,7 +4,13 @@ const port = 3000;
 
 //Database connection
 const { Client } = require('pg');
-const client = new Client({ user: 'postgres', host: 'localhost', database: 'DSSwebsiteDB', password: 'YOUR_PASSWORD', port: '5432', });
+const client = new Client({ 
+    user: process.env.user,
+    host: process.env.host, 
+    database: process.env.database, 
+    password: process.env,password, 
+    port: process.env.port
+});
 //NOTE: This needs changing so different users can have different passwords set
 
 client.connect() .then(() => { console.log('Connected to PostgreSQL database!'); })
