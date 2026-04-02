@@ -1,5 +1,3 @@
-require('dotenv').config(); //needed for database connection with .env
-
 const express = require('express')
 const app = express();
 const port = 3000;
@@ -10,9 +8,10 @@ const client = new Client({
     user: process.env.user,
     host: process.env.host, 
     database: process.env.database, 
-    password: process.env.password, 
+    password: process.env,password, 
     port: process.env.port
 });
+//NOTE: This needs changing so different users can have different passwords set
 
 client.connect() .then(() => { console.log('Connected to PostgreSQL database!'); })
 .catch((err) => { console.error('Error connecting to the database:', err); });
