@@ -48,6 +48,11 @@ CREATE TABLE "UsersTable"
 
 ALTER TABLE IF EXISTS "UsersTable"
     OWNER to postgres;
+    
+ALTER TABLE "UsersTable"
+ADD CONSTRAINT "userNameUnique" UNIQUE ("userName");
+ALTER TABLE "UsersTable"
+ADD CONSTRAINT "userEmailUnique" UNIQUE ("userEmail");
 
 ----PASSWORD SALTS TABLE---- //stored in a different table for a bit of extra security
 

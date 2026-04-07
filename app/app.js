@@ -101,6 +101,62 @@ app.post('/',function(req, res){
     }
 });
 
+// signup POST request
+app.post('/signup', function(req, res) {
+
+    //gets inputted fields
+    var username = req.body.username_input;
+    var email = req.body.email_input;
+    var password = req.body.password_input;
+    var passwordC = req.body.passwordConfirm_input;
+
+    //check if any null fields
+    if (username === "" || email === "" || password === "" || passwordC === "")
+    {
+        // Send error message to signup.js (NOT ALL FIELDS FILLED IN)
+
+        // Redirect to signup
+        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            if (err){
+                console.log(err);
+            }
+        });
+    }
+
+    //ALL 5 of these will return the same error message
+    //For checking if names/emails are already taken, i'm gonna try using COUNT...
+    // to see if there are 0 other db entries with that name/email
+
+    //check if username is valid (length)
+    else if(username.length > 32)
+    {
+        // Send error message to signup.js
+
+        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            if (err){
+                console.log(err);
+            }
+        });
+    }
+    //check if email is valid (length, contains 1 @)
+
+    //check if username or email is already taken
+
+    //check if password is valid (length, check against common passwords)
+
+    //check if passwords don't match
+    else if(password !== passwordC) {
+
+        // Send error message to signup.js (PASSWORDS DONT MATCH)
+
+        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            if (err){
+                console.log(err);
+            }
+        });
+    }
+});
+
 // Make a post POST request
 app.post('/makepost', function(req, res) {
 
