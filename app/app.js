@@ -121,7 +121,7 @@ app.post('/',function(req, res){
 });
 
 // signup POST request
-app.post('/signup', function(req, res) {
+app.post('/signup', async function(req, res){
 
     //gets inputted fields
     var username = req.body.username_input;
@@ -133,7 +133,7 @@ app.post('/signup', function(req, res) {
     if (username === "" || email === "" || password === "" || passwordC === "")
     {
         // Send error message to signup.js (NOT ALL FIELDS FILLED IN)
-
+        console.log("NULL FIELDS");
         // Redirect to signup
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
@@ -142,15 +142,14 @@ app.post('/signup', function(req, res) {
         });
     }
 
-    //ALL 5 of these will return the same error message
-    //For checking if names/emails are already taken, i'm gonna try using COUNT...
-    // to see if there are 0 other db entries with that name/email
+    //The next 4 checks should all have the same error message (invalid inputs) to avoid account enumeration
+    //(the console.logs are temporary and for debugging)
 
     //check if username is valid (length)
     else if(username.length > 32)
     {
         // Send error message to signup.js
-
+        console.log("TOO LONG USERNAME");
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
                 console.log(err);
@@ -160,19 +159,57 @@ app.post('/signup', function(req, res) {
     //check if email is valid (length, contains 1 @)
 
     //check if username or email is already taken
+    else
+    {
+        let numberOfMatches = -1;
+        try {
+            await client.query('SET SEARCH_PATH TO "gameBlog", public;');
+            
+            const usernameEmailTakenCheck = `SELECT COUNT (*) FROM "UsersTable" WHERE ("userName" = $1 OR "userEmail" = $2);`;
 
-    //check if password is valid (length, check against common passwords)
+            const values = [username, email];
+        
+            const result = await client.query(usernameEmailTakenCheck, values);
+            numberOfMatches = parseInt(result.rows[0].count);
 
-    //check if passwords don't match
-    else if(password !== passwordC) {
+        } catch (error) {
+            console.error(error);
+            numberOfMatches = -1;
+        }
+        if (numberOfMatches === -1) // database error
+        {
+            // Send error message to signup.js (SERVER ERROR)
+            console.log("DATABASE ERROR");
+            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+                if (err){
+                    console.log(err);
+                }
+            });
+        }
+        else if (numberOfMatches !== 0) // other users with the same name/email
+        {
+            // Send error message to signup.js (BAD INPUTS)
+            console.log("EXISTING NAME OR EMAIL");
+            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+                if (err){
+                    console.log(err);
+                }
+            });
+        }
+    
+        //check if password is valid (length, check against common passwords)
 
-        // Send error message to signup.js (PASSWORDS DONT MATCH)
+        //check if passwords don't match
+        else if(password !== passwordC) {
 
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
+            // Send error message to signup.js (PASSWORDS DONT MATCH)
+            console.log("MISMATCHING PASSWORDS");
+            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+                if (err){
+                    console.log(err);
+                }
+            });
+        }
     }
 });
 
