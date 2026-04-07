@@ -15,47 +15,55 @@ CREATE DATABASE "DSSwebsiteDB"
 
 ----SCHEMA----
 
-CREATE SCHEMA schema1
+CREATE SCHEMA gameBlog
     AUTHORIZATION postgres;
+
+NOTE: you might have to go through pgAdmin's creating-menu for database and schema
+For database: set the name, then in Definition, set the template to "postgres" (if you get an arror about daticulocale not existing, ignore it, the database created anyway)
+for schema, literally just set the name
+
+---The part below is guaranteed to be copy-paste-eable---
+
+SET search_path TO "gameBlog";
 
 ----USER TABLE + ENUM----
 
-CREATE TYPE schema1."userTypeEnum" AS ENUM
+CREATE TYPE "userTypeEnum" AS ENUM
     ('Standard', 'Admin');
 
-ALTER TYPE schema1."userTypeEnum"
+ALTER TYPE "userTypeEnum"
     OWNER TO postgres;
 
 ----
 
-CREATE TABLE schema1."UsersTable"
+CREATE TABLE "UsersTable"
 (
     "userID" integer NOT NULL,
     "userName" character varying(32) NOT NULL,
     "userEmail" character varying(320) NOT NULL,
     "userPassHash" character varying(64) NOT NULL,
-    "userType" schema1."userTypeEnum" NOT NULL,
+    "userType" "userTypeEnum" NOT NULL,
     PRIMARY KEY ("userID")
 );
 
-ALTER TABLE IF EXISTS schema1."UsersTable"
+ALTER TABLE IF EXISTS "UsersTable"
     OWNER to postgres;
 
 ----PASSWORD SALTS TABLE---- //stored in a different table for a bit of extra security
 
-CREATE TABLE schema1."UserPassSaltsTable"
+CREATE TABLE "UserPassSaltsTable"
 (
-    "userID" integer NOT NULL references schema1."UsersTable"("userID"),
+    "userID" integer NOT NULL references "UsersTable"("userID"),
     "passSalt" character varying(16) NOT NULL,
     PRIMARY KEY ("userID")
 );
 
-ALTER TABLE IF EXISTS schema1."UserPassSaltsTable"
+ALTER TABLE IF EXISTS "UserPassSaltsTable"
     OWNER to postgres;
 
 ----GAME TABLE----
 
-CREATE TABLE schema1."GamesTable"
+CREATE TABLE "GamesTable"
 (
     "gameID" integer NOT NULL,
     "gameName" character varying(128) NOT NULL,
@@ -63,30 +71,30 @@ CREATE TABLE schema1."GamesTable"
     PRIMARY KEY ("gameID")
 );
 
-ALTER TABLE IF EXISTS schema1."GamesTable"
+ALTER TABLE IF EXISTS "GamesTable"
     OWNER to postgres;
 
 ----POST TABLE + ENUM----
 
-CREATE TYPE schema1."postTypeEnum" AS ENUM
+CREATE TYPE "postTypeEnum" AS ENUM
     ('Standard', 'Review', 'BugReport', 'DevLog');
 
-ALTER TYPE schema1."postTypeEnum"
+ALTER TYPE "postTypeEnum"
     OWNER TO postgres;
 
 ----
 
-CREATE TABLE schema1."PostsTable"
+CREATE TABLE "PostsTable"
 (
     "postID" integer NOT NULL,
-    "userID" integer NOT NULL references schema1."UsersTable"("userID"),
-    "gameID" integer references schema1."GamesTable"("gameID"),
-    "postType" schema1."postTypeEnum" NOT NULL,
+    "userID" integer NOT NULL references "UsersTable"("userID"),
+    "gameID" integer references "GamesTable"("gameID"),
+    "postType" "postTypeEnum" NOT NULL,
     "postTitle" character varying(256) NOT NULL,
     "postContent" character varying(2048),
     "postReviewScore" integer,
     PRIMARY KEY ("postID")
 );
 
-ALTER TABLE IF EXISTS schema1."PostsTable"
+ALTER TABLE IF EXISTS "PostsTable"
     OWNER to postgres;
