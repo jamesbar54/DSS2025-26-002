@@ -1,4 +1,4 @@
-console.log(require('dotenv').config()); //needed for database connection with .env
+require('dotenv').config(); //needed for database connection with .env
 
 const express = require('express')
 const app = express();
