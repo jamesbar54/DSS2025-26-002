@@ -35,6 +35,25 @@ app.get('/', (req, res) => {
     })
 });
 
+app.get('/game', (req, res) => {
+
+    client.query('SET SEARCH_PATH TO "gameBlog", public;', (err) => {
+        if (err) {
+            console.error("Error setting search path:", err);
+            return res;
+        }
+
+        const queryString = `SELECT * FROM "GamesTable";`;
+        client.query(queryString, (err, resp) => {
+            if (err) {
+                console.error("Database query error:", err);
+                return res;
+            }
+            return res.status(200).json(resp.rows);
+        })
+    })
+})
+
 // Reset login_attempt.json when server restarts
 let login_attempt = {"username" : "null", "password" : "null"};
 let data = JSON.stringify(login_attempt);
