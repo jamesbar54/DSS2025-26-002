@@ -55,7 +55,7 @@ app.get('/game', (req, res) => {
 })
 
 // Reset login_attempt.json when server restarts
-let login_attempt = {"username" : "null", "password" : "null"};
+let login_attempt = {"username" : "null", "password" : "null", "success":false};
 let data = JSON.stringify(login_attempt);
 fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
@@ -63,61 +63,108 @@ fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 let currentUser = null;
 
 // Login POST request
-app.post('/',function(req, res){
+app.post('/login',function(req, res){
 
     // Get username and password entered from user
     var username = req.body.username_input;
+    console.log(username);
     var password = req.body.password_input;
+    console.log(password);
 
-    // Currently only "username" is a valid username
-    if(username !== "username") {
+    client.query('SET SEARCH_PATH TO "gameBlog", public;', (err) => {
+        if (err) {
+            console.error("Error setting search path:", err);
+            return res;
+        }
 
-        // Update login_attempt with credentials used to log in
-        let login_attempt = {"username" : username, "password" : password};
-        let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+        client.query(`SELECT * FROM "UsersTable" WHERE "userName" = '${username}' and "userPassHash" = '${password}';`, (err, resp) => {
+            if (err) {
+                console.error("Database query error:", err);
+                return res;
+            } else {
+                console.log(resp.rowCount)
 
-        // Redirect back to login page
-        res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
-    }
+                if(resp.rowCount == 1){
+                    // Update login_attempt with credentials
+                    let login_attempt = {"username" : username, "password" : password, "success":true};
+                    let data = JSON.stringify(login_attempt);
+                    fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
-    // Currently only "password" is a valid password
-    if(password !== "password") {
+                    // Update current user upon successful login
+                    currentUser = req.body.username_input;
 
-        // Update login_attempt with credentials used to log in
-        let login_attempt = {"username" : username, "password" : password};
-        let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+                    // Redirect to home page
+                    res.sendFile(__dirname + '/public/html/index.html', (err) => {
+                        if (err){
+                            console.log(err);
+                        }
+                    })
+                }else if(resp.rowCount == 0){
+                    // Update login_attempt with credentials used to log in
+                    let login_attempt = {"username" : username, "password" : password, "success":false};
+                    let data = JSON.stringify(login_attempt);
+                    fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
-        // Redirect back to login page
-        res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
-    }
-
-    // Valid username and password both entered together
-    if(username === "username" && password === "password") {
-        // Update login_attempt with credentials
-        let login_attempt = {"username" : username, "password" : password};
-        let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-        // Update current user upon successful login
-        currentUser = req.body.username_input;
-
-        // Redirect to home page
-        res.sendFile(__dirname + '/public/html/index.html', (err) => {
-            if (err){
-                console.log(err);
+                    // Redirect back to login page
+                    res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                        if (err){
+                            console.log(err);
+                        }
+                    });
+                }
             }
         })
-    }
+    })
+
+    // // Currently only "username" is a valid username
+    // if(username !== "username") {
+
+    //     // Update login_attempt with credentials used to log in
+    //     let login_attempt = {"username" : username, "password" : password};
+    //     let data = JSON.stringify(login_attempt);
+    //     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+    //     // Redirect back to login page
+    //     res.sendFile(__dirname + '/public/html/login.html', (err) => {
+    //         if (err){
+    //             console.log(err);
+    //         }
+    //     });
+    // }
+
+    // // Currently only "password" is a valid password
+    // if(password !== "password") {
+
+    //     // Update login_attempt with credentials used to log in
+    //     let login_attempt = {"username" : username, "password" : password};
+    //     let data = JSON.stringify(login_attempt);
+    //     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+    //     // Redirect back to login page
+    //     res.sendFile(__dirname + '/public/html/login.html', (err) => {
+    //         if (err){
+    //             console.log(err);
+    //         }
+    //     });
+    // }
+
+    // // Valid username and password both entered together
+    // if(username === "username" && password === "password") {
+    //     // Update login_attempt with credentials
+    //     let login_attempt = {"username" : username, "password" : password};
+    //     let data = JSON.stringify(login_attempt);
+    //     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+    //     // Update current user upon successful login
+    //     currentUser = req.body.username_input;
+
+    //     // Redirect to home page
+    //     res.sendFile(__dirname + '/public/html/index.html', (err) => {
+    //         if (err){
+    //             console.log(err);
+    //         }
+    //     })
+    // }
 });
 
 // signup POST request
