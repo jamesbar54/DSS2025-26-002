@@ -1,8 +1,10 @@
 require('dotenv').config(); //needed for database connection with .env
 
-const express = require('express')
+const express = require('express');
 const app = express();
 const port = 3000;
+
+const crypto = require('crypto'); //Node.js module for hashing / random number generating
 
 //Database connection
 const { Client } = require('pg');
@@ -62,6 +64,13 @@ fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 // Store who is currently logged in
 let currentUser = null;
 
+//Function for hashing an input string
+//currently does literally nothing
+function HashString(input)
+{
+    return input;
+}
+
 // Login POST request
 app.post('/login',function(req, res){
 
@@ -117,6 +126,29 @@ app.post('/login',function(req, res){
     })
 });
 
+//Function for checking if an email is valid
+//Currently only checks if theres exactly 1 @ symbol
+function CheckValidEmail(input)
+{
+    if ((String(input).split("@").length - 1) === 1)
+    {
+        return true;
+    }
+    else { return false; }
+}
+
+//Function for checking password against a list of common passwords
+function CheckCommonPassword(input)
+{
+    return false;
+}
+
+//function for randomly generating a 16-character string for the Salt
+function GenerateSalt()
+{
+    return crypto.randomBytes(8).toString('hex');
+}
+
 // signup POST request
 app.post('/signup', async function(req, res){
 
@@ -142,18 +174,29 @@ app.post('/signup', async function(req, res){
     //The next 4 checks should all have the same error message (invalid inputs) to avoid account enumeration
     //(the console.logs are temporary and for debugging)
 
-    //check if username is valid (length)
-    else if(username.length > 32)
+
+    //check if username is valid (length, NOT A VALID EMAIL)
+    else if((username.length > 32) || CheckValidEmail(username))
     {
         // Send error message to signup.js
-        console.log("TOO LONG USERNAME");
+        console.log("BAD USERNAME");
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
                 console.log(err);
             }
         });
     }
-    //check if email is valid (length, contains 1 @)
+    //check if email is valid (length, VALID EMAIL)
+    else if((email.length > 320) || !CheckValidEmail(email))
+    {
+        // Send error message to signup.js
+        console.log("BAD EMAIL");
+        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            if (err){
+                console.log(err);
+            }
+        });
+    }
 
     //check if username or email is already taken
     else
@@ -195,6 +238,16 @@ app.post('/signup', async function(req, res){
         }
     
         //check if password is valid (length, check against common passwords)
+        else if((password.length < 15) || CheckCommonPassword(password))
+        {
+            // Send error message to signup.js (BAD INPUTS)
+            console.log("SHORT PASSWORD");
+            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+                if (err){
+                    console.log(err);
+                }
+            });
+        }
 
         //check if passwords don't match
         else if(password !== passwordC) {
@@ -206,6 +259,80 @@ app.post('/signup', async function(req, res){
                     console.log(err);
                 }
             });
+        }
+
+        else
+        {
+            //Currently no 2FA, need to change that
+
+            //Make a random string for the salt, then add to the database
+            const newSalt = GenerateSalt();
+            console.log(newSalt);
+
+            try {
+                await client.query('SET SEARCH_PATH TO "gameBlog", public;');
+                
+                //find an unused ID
+                let newUserID = 0;
+
+                const idCheck = `SELECT "userID" FROM "UsersTable";`;
+                const idResult = await client.query(idCheck);
+
+                let usedIDFlag = false;
+                let unfoundID = true;
+
+                while (unfoundID)
+                {
+                    console.log(newUserID);
+                    usedIDFlag = false;
+                    for (let i=0;i<idResult.rows.length;i++)
+                    {
+                        console.log("Comparing "+newUserID+" to database's "+parseInt(idResult.rows[i].userID));
+                        if (parseInt(idResult.rows[i].userID) === newUserID)
+                        {
+                            console.log("THEYRE THE SAME");
+                            usedIDFlag = true;
+                            break;
+                        }
+                    }
+                    if (!usedIDFlag)
+                    {
+                        unfoundID = false;
+                    }
+                    else
+                    {
+                        newUserID = newUserID + 1;
+                    }
+                }   
+
+                const newUser = `INSERT INTO "UsersTable"("userID", "userName", "userEmail", "userPassHash", "userType")
+                    VALUES ($1, $2, $3, $4, 'Standard');`;
+                const newUserValues = [newUserID, username, email, HashString(password + newSalt)];
+                await client.query(newUser, newUserValues);
+
+                const newUserSalt = `INSERT INTO "UserPassSaltsTable"("userID", "passSalt")
+                    VALUES ($1, $2);`;
+                const newUserSaltValues = [newUserID, newSalt];
+                await client.query(newUserSalt, newUserSaltValues);
+
+                console.log("GREAT SUCCESS");
+                //TEMPORARY - send you to login page to login to your new account
+                res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                    if (err){
+                        console.log(err);
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+                // Send error message to signup.js (SERVER ERROR)
+                console.log("DATABASE ERROR BUT VALID INFO");
+                res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+                    if (err){
+                        console.log(err);
+                    }
+                });
+            }  
         }
     }
 });
