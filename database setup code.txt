@@ -1,32 +1,32 @@
-Idk where else to put it, but here's the SQL code that I (Harry) have used for setting up the database
+--Idk where else to put it, but here's the SQL code that I (Harry) have used for setting up the database
 
-NOTE: I'm doing all this in the default "PostgreSQL 18" server that came with my pgadmin install.
+--NOTE: I'm doing all this in the default "PostgreSQL 18" server that came with my pgadmin install.
 
-----DATABASE----
+--DATABASE
 
 CREATE DATABASE "DSSwebsiteDB"
     WITH
-    OWNER = postgres     //this is the default username that's attached to the server and idk if i can change it or if its even needed
+    OWNER = postgres     --this is the default username that's attached to the server and idk if i can change it or if its even needed
     TEMPLATE = postgres
     ENCODING = 'UTF8'
     LOCALE_PROVIDER = 'libc'
     CONNECTION LIMIT = -1
     IS_TEMPLATE = False;
 
-----SCHEMA----
+--SCHEMA
 
 CREATE SCHEMA gameBlog
     AUTHORIZATION postgres;
 
-NOTE: you might have to go through pgAdmin's creating-menu for database and schema
-For database: set the name, then in Definition, set the template to "postgres" (if you get an arror about daticulocale not existing, ignore it, the database created anyway)
-for schema, literally just set the name
+--NOTE: you might have to go through pgAdmin's creating-menu for database and schema
+--For database: set the name, then in Definition, set the template to "postgres" (if you get an arror about daticulocale not existing, ignore it, the database created anyway)
+--for schema, literally just set the name
 
----The part below is guaranteed to be copy-paste-eable---
+--The part below is guaranteed to be copy-paste-eable
 
 SET search_path TO "gameBlog";
 
-----USER TABLE + ENUM----
+--USER TABLE + ENUM
 
 CREATE TYPE "userTypeEnum" AS ENUM
     ('Standard', 'Admin');
@@ -34,7 +34,7 @@ CREATE TYPE "userTypeEnum" AS ENUM
 ALTER TYPE "userTypeEnum"
     OWNER TO postgres;
 
-----
+--
 
 CREATE TABLE "UsersTable"
 (
@@ -54,7 +54,9 @@ ADD CONSTRAINT "userNameUnique" UNIQUE ("userName");
 ALTER TABLE "UsersTable"
 ADD CONSTRAINT "userEmailUnique" UNIQUE ("userEmail");
 
-----PASSWORD SALTS TABLE---- //stored in a different table for a bit of extra security
+ALTER TABLE "UsersTable" ADD "users2FA" BOOLEAN DEFAULT false; --for optional 2FA when logging in
+
+--PASSWORD SALTS TABLE, stored in a different table for a bit of extra security
 
 CREATE TABLE "UserPassSaltsTable"
 (
@@ -66,7 +68,7 @@ CREATE TABLE "UserPassSaltsTable"
 ALTER TABLE IF EXISTS "UserPassSaltsTable"
     OWNER to postgres;
 
-----GAME TABLE----
+--GAME TABLE
 
 CREATE TABLE "GamesTable"
 (
@@ -79,7 +81,7 @@ CREATE TABLE "GamesTable"
 ALTER TABLE IF EXISTS "GamesTable"
     OWNER to postgres;
 
-----POST TABLE + ENUM----
+--POST TABLE + ENUM
 
 CREATE TYPE "postTypeEnum" AS ENUM
     ('Standard', 'Review', 'BugReport', 'DevLog');
@@ -87,7 +89,7 @@ CREATE TYPE "postTypeEnum" AS ENUM
 ALTER TYPE "postTypeEnum"
     OWNER TO postgres;
 
-----
+--
 
 CREATE TABLE "PostsTable"
 (
