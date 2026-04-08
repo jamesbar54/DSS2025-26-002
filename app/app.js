@@ -115,56 +115,6 @@ app.post('/login',function(req, res){
             }
         })
     })
-
-    // // Currently only "username" is a valid username
-    // if(username !== "username") {
-
-    //     // Update login_attempt with credentials used to log in
-    //     let login_attempt = {"username" : username, "password" : password};
-    //     let data = JSON.stringify(login_attempt);
-    //     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-    //     // Redirect back to login page
-    //     res.sendFile(__dirname + '/public/html/login.html', (err) => {
-    //         if (err){
-    //             console.log(err);
-    //         }
-    //     });
-    // }
-
-    // // Currently only "password" is a valid password
-    // if(password !== "password") {
-
-    //     // Update login_attempt with credentials used to log in
-    //     let login_attempt = {"username" : username, "password" : password};
-    //     let data = JSON.stringify(login_attempt);
-    //     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-    //     // Redirect back to login page
-    //     res.sendFile(__dirname + '/public/html/login.html', (err) => {
-    //         if (err){
-    //             console.log(err);
-    //         }
-    //     });
-    // }
-
-    // // Valid username and password both entered together
-    // if(username === "username" && password === "password") {
-    //     // Update login_attempt with credentials
-    //     let login_attempt = {"username" : username, "password" : password};
-    //     let data = JSON.stringify(login_attempt);
-    //     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-    //     // Update current user upon successful login
-    //     currentUser = req.body.username_input;
-
-    //     // Redirect to home page
-    //     res.sendFile(__dirname + '/public/html/index.html', (err) => {
-    //         if (err){
-    //             console.log(err);
-    //         }
-    //     })
-    // }
 });
 
 // signup POST request
