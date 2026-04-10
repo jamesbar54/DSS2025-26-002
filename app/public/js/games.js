@@ -1,4 +1,4 @@
-function test(){
+function fetchGames(){
     fetch(`/game`)
     .then(response => {
             if (!response.ok) {
@@ -54,4 +54,4 @@ function test(){
     
 }
 
-test();
+fetchGames();

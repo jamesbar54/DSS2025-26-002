@@ -338,45 +338,31 @@ app.post('/signup', async function(req, res){
 });
 
 // Make a post POST request
-app.post('/makepost', function(req, res) {
+app.post('/makepost', async function(req, res) {
 
-    // Read in current posts
-    const json = fs.readFileSync(__dirname + '/public/json/posts.json');
-    var posts = JSON.parse(json);
-
-    // Get the current date
     let curDate = new Date();
     curDate = curDate.toLocaleString("en-GB");
+    const {title, content, postType, rating} = req.body
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const userID = await client.query(`SELECT "userID" FROM "UsersTable" WHERE "userName" = $1`, [currentUser]);
+        const postID = await client.query(`SELECT MAX("postID") AS "maxPostID" FROM "PostsTable";`);
 
-    // Find post with the highest ID
-    let maxId = 0;
-    for (let i = 0; i < posts.length; i++) {
-        if (posts[i].postId > maxId) {
-            maxId = posts[i].postId;
+        if(postType == 'Review'){
+            const gameID = await client.query(`SELECT "gameID" FROM "GamesTable" WHERE "gameName" = $1`, [title]);
+            const createReview = `INSERT INTO "PostsTable"("postID", "userID", "gameID", "postType", "postTitle", "postContent", "postReviewScore", timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
+            reviewVals = [postID.rows[0].maxPostID + 1, userID.rows[0].userID, gameID.rows[0].gameID, postType, title, content, rating, curDate]
+            await client.query(createReview, reviewVals);
+        }else if(postType == 'Standard'){
+            const createPost = `INSERT INTO "PostsTable"("postID", "userID", "postType", "postTitle", "postContent", timestamp) VALUES ($1, $2, $3, $4, $5, $6)`;
+            postVals = [postID.rows[0].maxPostID + 1, userID.rows[0].userID, postType, title, content, curDate]
+            await client.query(createPost, postVals);
         }
+        res.status(201).json({message: "it worked yippee"})
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ error: "There was an error with the server" });
     }
-
-    // Initialise ID for a new post
-    let newId = 0;
-
-    // If postId is empty, user is making a new post
-    if(req.body.postId == "") {
-        newId = maxId + 1;
-    } else { // If postID != empty, user is editing a post
-        newId = req.body.postId;
-
-        // Find post with the matching ID, delete it from posts so user can submit their new version
-        let index = posts.findIndex(item => item.postId == newId);
-        posts.splice(index, 1);
-    }
-
-    // Add post to posts.json
-    posts.push({"username": currentUser , "timestamp": curDate, "postId": newId, "title": req.body.title_field, "content": req.body.content_field});
-
-    fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
-
-    // Redirect back to my_posts.html
-    res.sendFile(__dirname + "/public/html/my_posts.html");
  });
 
  // Delete a post POST request

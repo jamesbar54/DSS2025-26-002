@@ -105,3 +105,6 @@ CREATE TABLE "PostsTable"
 
 ALTER TABLE IF EXISTS "PostsTable"
     OWNER to postgres;
+
+ALTER TABLE IF EXISTS "PostsTable"
+    ADD COLUMN "timestamp" timestamp with time zone NOT NULL;
