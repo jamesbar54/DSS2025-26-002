@@ -365,3 +365,30 @@ legend{
 #postForm button[type=submit]:hover {
     background-color: #81aa85;
 }
+
+/*************** GAMES STYLING ***************/
+
+      .games {
+        background-color: white;
+        border: 2px solid #2f6b4f;
+        border-radius: 10px;
+        margin: 10px;
+        text-align: left;
+      }
+
+      .gameImage{
+        border-radius: 5px;
+        max-width: 210px;
+        max-height: 280px;
+      }
+
+      .gameFig{
+        display: flex;
+        flex-direction: row;
+        margin: 20px;
+      }
+
+      .gameFigCap{
+        padding-left: 10px;
+      }
+

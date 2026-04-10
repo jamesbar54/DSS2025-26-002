@@ -12,25 +12,33 @@ function test(){
         let gameList = document.getElementById('gameList');
         for(let i = 0; i < data.length; i++) {
             let name = data[i].gameName;
-            let gameNum = i + 1;
-            let rating = "Rating: " + Math.floor(Math.random() * 10)
+            let gameDesc = data[i].gameDesc;
+            let gameImg = data[i].gameImgUrl
+            let rating = "User Rating: " + Math.floor(Math.random() * 10)
 
             let gameContainer = document.createElement('article');
-            gameContainer.classList.add("post");
+            gameContainer.classList.add("games");
             let fig = document.createElement('figure');
+            fig.className = "gameFig";
             gameContainer.appendChild(fig);
 
             let img = document.createElement('img');
+            img.src = gameImg;
+            img.className = "gameImage"
+
             let figcap = document.createElement('figcaption');
+            figcap.className = "gameFigCap"
             fig.appendChild(img);
             fig.appendChild(figcap);
+
+
             
             let nameContainer = document.createElement('h3');
             nameContainer.textContent = name;
             figcap.appendChild(nameContainer);
-            
+
             let usernameContainer = document.createElement('h5');
-            usernameContainer.textContent = gameNum;
+            usernameContainer.textContent = gameDesc;
             figcap.appendChild(usernameContainer);
 
             let contentContainer = document.createElement('p');
