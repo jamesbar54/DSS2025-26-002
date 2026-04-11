@@ -1,68 +1,130 @@
 // Function to load posts made by user who is currently logged in
-async function loadPosts() {
+// async function loadPosts() {
 
-    // Load posts data
-    const post_response = await fetch("../json/posts.json");
-    const post_data = await post_response.json();
+//     // Load posts data
+//     const post_response = await fetch("../json/posts.json");
+//     const post_data = await post_response.json();
 
-    const login_response = await fetch("../json/login_attempt.json");
-    const login_data = await login_response.json();
+//     const login_response = await fetch("../json/login_attempt.json");
+//     const login_data = await login_response.json();
 
-    let postList = document.getElementById('postsList');
+//     let postList = document.getElementById('postsList');
 
-    // Remove current posts
-    for(let i = 0; i < postList.children.length; i++) {
-        if(postList.children[i].nodeName == "article") {
-            postList.removeChild(postList.children[i]);
-        }
-    }
+//     // Remove current posts
+//     for(let i = 0; i < postList.children.length; i++) {
+//         if(postList.children[i].nodeName == "article") {
+//             postList.removeChild(postList.children[i]);
+//         }
+//     }
 
-    // Add all recorded posts
-    for(let i = 0; i < post_data.length; i++) {
-        let author = post_data[i].username;
-        let timestamp = post_data[i].timestamp;
-        let title = post_data[i].title;
-        let content = post_data[i].content;
-        let postId = post_data[i].postId;
+//     // Add all recorded posts
+//     for(let i = 0; i < post_data.length; i++) {
+//         let author = post_data[i].username;
+//         let timestamp = post_data[i].timestamp;
+//         let title = post_data[i].title;
+//         let content = post_data[i].content;
+//         let postId = post_data[i].postId;
 
-        let postContainer = document.createElement('article');
-        postContainer.classList.add("post");
-        let fig = document.createElement('figure');
-        postContainer.appendChild(fig);
+//         let postContainer = document.createElement('article');
+//         postContainer.classList.add("post");
+//         let fig = document.createElement('figure');
+//         postContainer.appendChild(fig);
 
-        let postIdContainer = document.createElement("p");
-        postIdContainer.textContent = postId;
-        postIdContainer.hidden = true;
-        postId.id = "postId";
-        postContainer.appendChild(postIdContainer);
+//         let postIdContainer = document.createElement("p");
+//         postIdContainer.textContent = postId;
+//         postIdContainer.hidden = true;
+//         postId.id = "postId";
+//         postContainer.appendChild(postIdContainer);
 
-        let img = document.createElement('img');
-        let figcap = document.createElement('figcaption');
-        fig.appendChild(img);
-        fig.appendChild(figcap);
+//         let img = document.createElement('img');
+//         let figcap = document.createElement('figcaption');
+//         fig.appendChild(img);
+//         fig.appendChild(figcap);
         
-        let titleContainer = document.createElement('h3');
-        titleContainer.textContent = title;
-        figcap.appendChild(titleContainer);
+//         let titleContainer = document.createElement('h3');
+//         titleContainer.textContent = title;
+//         figcap.appendChild(titleContainer);
         
-        let usernameContainer = document.createElement('h5');
-        usernameContainer.textContent = author;
-        figcap.appendChild(usernameContainer);
+//         let usernameContainer = document.createElement('h5');
+//         usernameContainer.textContent = author;
+//         figcap.appendChild(usernameContainer);
 
-        let timeContainer = document.createElement('h5');
-        timeContainer.textContent = timestamp;
-        figcap.appendChild(timeContainer);
+//         let timeContainer = document.createElement('h5');
+//         timeContainer.textContent = timestamp;
+//         figcap.appendChild(timeContainer);
 
-        let contentContainer = document.createElement('p');
-        contentContainer.textContent = content;
-        figcap.appendChild(contentContainer);
+//         let contentContainer = document.createElement('p');
+//         contentContainer.textContent = content;
+//         figcap.appendChild(contentContainer);
 
-        postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
+//         postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
+//     }
+// }
+
+// loadPosts();
+
+async function getPosts(){
+    fetch(`/getposts`)
+    .then(response => {
+            if (!response.ok) {
+                console.error('Server returned an error:', response.statusText);
+                throw new Error('Failed to fetch search results');
+            }
+            return response.json();
+        })
+    .then(data => {
+        console.log(data)
+        let postList = document.getElementById('postsList');
+        for(let i = 0; i < data.length; i++) {
+            let author = data[i].userName;
+            let timestamp = data[i].timestamp;
+            let title = data[i].postTitle;
+            let content = data[i].postContent;
+            let postID = data[i].postID;
+            console.log(timestamp)
+            console.log(title)
+            console.log(content)
+            console.log(postID)
+            let postContainer = document.createElement('article');
+            postContainer.classList.add("post");
+            let fig = document.createElement('figure');
+            postContainer.appendChild(fig);
+
+            let postIdContainer = document.createElement("p");
+            postIdContainer.textContent = postID;
+            postIdContainer.hidden = true;
+            postID.id = "postId";
+            postContainer.appendChild(postIdContainer);
+
+            let img = document.createElement('img');
+            let figcap = document.createElement('figcaption');
+            fig.appendChild(img);
+            fig.appendChild(figcap);
+            
+            let titleContainer = document.createElement('h3');
+            titleContainer.textContent = title;
+            figcap.appendChild(titleContainer);
+            
+            let usernameContainer = document.createElement('h5');
+            usernameContainer.textContent = author;
+            figcap.appendChild(usernameContainer);
+
+            let timeContainer = document.createElement('h5');
+            timeContainer.textContent = timestamp;
+            figcap.appendChild(timeContainer);
+
+            let contentContainer = document.createElement('p');
+            contentContainer.textContent = content;
+            figcap.appendChild(contentContainer);
+
+            postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
     }
+        
+    })
+    .catch(error => console.error('Error fetching search results:', error));
 }
 
-loadPosts();
-
+getPosts();
 // Function to filter posts on page using search bar
 function searchPosts() {
 

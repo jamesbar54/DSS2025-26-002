@@ -349,10 +349,12 @@ app.post('/makepost', async function(req, res) {
         const postID = await client.query(`SELECT MAX("postID") AS "maxPostID" FROM "PostsTable";`);
 
         if(postType == 'Review'){
+            
             const gameID = await client.query(`SELECT "gameID" FROM "GamesTable" WHERE "gameName" = $1`, [title]);
             const createReview = `INSERT INTO "PostsTable"("postID", "userID", "gameID", "postType", "postTitle", "postContent", "postReviewScore", timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
             reviewVals = [postID.rows[0].maxPostID + 1, userID.rows[0].userID, gameID.rows[0].gameID, postType, title, content, rating, curDate]
             await client.query(createReview, reviewVals);
+
         }else if(postType == 'Standard'){
             const createPost = `INSERT INTO "PostsTable"("postID", "userID", "postType", "postTitle", "postContent", timestamp) VALUES ($1, $2, $3, $4, $5, $6)`;
             postVals = [postID.rows[0].maxPostID + 1, userID.rows[0].userID, postType, title, content, curDate]
@@ -364,6 +366,30 @@ app.post('/makepost', async function(req, res) {
         res.status(500).json({ error: "There was an error with the server" });
     }
  });
+
+ app.get('/getposts', (req, res) => {
+
+    client.query('SET SEARCH_PATH TO "gameBlog", public;', (err) => {
+        if (err) {
+            console.error("Error setting search path:", err);
+            return res;
+        }
+        // Selects everything from postsTable, username ONLY from userstable and does it with the userID from the poststable
+        // It joins the 2 tables to get the username from userstable since posts only store userID
+        const getPosts = `SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Standard';`;
+        
+        client.query(getPosts, async (err, resp) => {
+            if (err) {
+                console.error("Database query error:", err);
+                return res;
+            }
+            // const postUser = await client.query(`SELECT "userName" FROM "UsersTable" WHERE "userID" = $1`, [resp.rows[0].postID])
+            console.table(resp.rows)
+            return res.status(200).json(resp.rows);
+        })
+    })
+
+ })
 
  // Delete a post POST request
  app.post('/deletepost', (req, res) => {
