@@ -119,7 +119,7 @@ app.get('/auth/google',
 app.get('/auth/google/callback',
     passport.authenticate('google', {failureRedirect: '/'}),
     (req, res) => {
-        currentUser = req.user.userEmail;
+        currentUser = req.user.userName;
         let login_attempt = {"username": req.user.userEmail, "password": "null", "success": true };
         fs.writeFileSync(__dirname + '/public/json/login_attempt.json', JSON.stringify(login_attempt));
        res.redirect('/html/index.html');
@@ -485,7 +485,7 @@ app.post('/makepost', async function(req, res) {
                 return res;
             }
             // const postUser = await client.query(`SELECT "userName" FROM "UsersTable" WHERE "userID" = $1`, [resp.rows[0].postID])
-            console.table(resp.rows)
+            // console.table(resp.rows)
             return res.status(200).json(resp.rows);
         })
     })
