@@ -410,3 +410,26 @@ legend{
         padding-left: 10px;
       }
 
+    .review_btn {
+        color: rgb(255, 255, 255);
+        background-color: #007443;
+        padding: 7px;
+        min-width: 100px;
+        border-radius: 3px;
+        border: 2px solid #3fb80f;
+        text-transform: uppercase;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        transition: background 300ms ease-in-out;
+        text-decoration: none;
+        margin-left: 50px;
+    }
+
+    .review_btn:hover {
+        background-color: #6ac4a2;
+    }
+
+    .reviewbtnwrapper {
+        margin-bottom: 10px;
+    }
