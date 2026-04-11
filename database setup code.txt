@@ -108,3 +108,7 @@ ALTER TABLE IF EXISTS "PostsTable"
 
 ALTER TABLE IF EXISTS "PostsTable"
     ADD COLUMN "timestamp" timestamp with time zone NOT NULL;
+
+ALTER TABLE "UsersTable" ALTER COLUMN "userPassHash" DROP NOT NULL;
+
+ALTER TABLE "UsersTable" ADD COLUMN "oauthProvider" character varying(32) DEFAULT NULL;
