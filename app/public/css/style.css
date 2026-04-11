@@ -89,6 +89,24 @@ body {
         background-color: #297b7c;
     }
 
+    #google_btn {
+    display: inline-block;
+    background-color: #4285F4;
+    color: white !important;
+    padding: 7px 14px;
+    border-radius: 5px;
+    border: 2px solid #2a65c9;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    margin-top: 10px;
+    transition: background 300ms ease-in-out;
+}
+
+#google_btn:hover {
+    background-color: #2a65c9;
+}
+
     label {
         font-weight: bold;
     }

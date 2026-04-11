@@ -4,11 +4,17 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+
+const passport = require('passport'); //middleware library to handle oauth
+const GoogleStrategy = require('passport-google-oauth20').Strategy; //oauth passport strategy
+const session = require('express-session'); //session management
+
+
 const crypto = require('crypto'); //Node.js module for hashing / random number generating
 
 //Database connection
-const { Client } = require('pg');
-const client = new Client({ 
+const { Pool } = require('pg');
+const client = new Pool({ 
     user: process.env.user,
     host: process.env.host, 
     database: process.env.database, 
@@ -26,6 +32,101 @@ app.use(express.static(__dirname + '/public'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+//Session middleware config
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false, //dont re-save session to store if no changes made
+    saveUninitialized: false //don't create a session until something is stored
+    //last 2 values are memory and performance things.
+}))
+
+//Passport config
+app.use(passport.initialize());
+app.use(passport.session());
+
+//only storing userID (keeps cookie small)
+passport.serializeUser((user,done) => {
+    done(null, user.userID);
+});
+
+//takes userid stored in session and fetches full user obj from db
+passport.deserializeUser(async(id,done) => {
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;');
+        const result = await client.query(
+            `SELECT * FROM "UsersTable" WHERE "userID" = $1`, [id]
+        );
+        done(null,result.rows[0]); //attach user row to req.user
+    } catch (err) {
+        done(err,null); //using passports error handler
+    }
+});
+
+//google oAuth strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID, //client id needs to be in .env
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET, //also
+    callbackURL: '/auth/google/callback'
+}, async(accessToken, refreshToken, profile, done) =>{ //params needed for access and data
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;');
+
+        const existing = await client.query(
+            `SELECT * FROM "UsersTable" WHERE "userName" = $1 AND "oauthProvider" = 'google'`,
+            [profile.id]
+        );
+
+        if(existing.rows.length > 0){
+            //user already exists, log in
+            return done(null, existing.rows[0]);
+        }
+
+        //new user (creating account)
+        //finding lowest unused Uid
+        const idResult = await client.query(`SELECT "userID" FROM "UsersTable";`);
+        let newUserID = 0;
+        const usedIDs = idResult.rows.map(r => parseInt(r.userID));
+        while (usedIDs.includes(newUserID)) newUserID++;
+
+        //inserting new user (no password hash as no password)
+        //oauth provider set to 'google' so we know who is a google and who isnt a google
+        await client.query(
+            `INSERT INTO "UsersTable"("userID", "userName", "userEmail", "userType", "oauthProvider")
+             VALUES ($1, $2, $3, 'Standard', 'google')`,
+             [newUserID, profile.id, profile.emails[0].value]
+        );
+
+        //fetch new user and pass to passport
+        const newUser = await client.query(
+            `SELECT * FROM "UsersTable" WHERE "userID" = $1`,
+            [newUserID]
+        );
+        return done (null, newUser.rows[0]);
+
+    }catch (err){
+        return done(err, null) //passport error handler
+    }
+}))
+
+//google oauth routing
+app.get('/auth/google',
+    passport.authenticate('google', {scope: ['profile', 'email']}) //scope is what info we want(profile is name and picture)
+);
+
+//callback that google redirects to after user login
+//redirects to either /login if fail, or sets user to current user and redirects to home
+app.get('/auth/google/callback',
+    passport.authenticate('google', {failureRedirect: '/'}),
+    (req, res) => {
+        currentUser = req.user.userEmail;
+        let login_attempt = {"username": req.user.userEmail, "password": "null", "success": true };
+        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', JSON.stringify(login_attempt));
+       res.redirect('/html/index.html');
+    }
+);
+
+
 
 // Landing page
 app.get('/', (req, res) => {
