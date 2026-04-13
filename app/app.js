@@ -162,6 +162,9 @@ let login_attempt = {"username" : "null", "password" : "null", "success":false};
 let data = JSON.stringify(login_attempt);
 fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
+//does the same thing for signup info
+fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
+
 // Store who is currently logged in
 let currentUser = null;
 
@@ -262,8 +265,9 @@ app.post('/signup', async function(req, res){
     //check if any null fields
     if (username === "" || email === "" || password === "" || passwordC === "")
     {
-        // Send error message to signup.js (NOT ALL FIELDS FILLED IN)
-        console.log("NULL FIELDS");
+        fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"nullFields"}));
+
+        console.log("NULL FIELDS"); //These console.logs are temporary and for debugging
         // Redirect to signup
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
@@ -273,14 +277,15 @@ app.post('/signup', async function(req, res){
     }
 
     //The next 4 checks should all have the same error message (invalid inputs) to avoid account enumeration
-    //(the console.logs are temporary and for debugging)
 
 
     //check if username is valid (length, NOT A VALID EMAIL)
     else if((username.length > 32) || CheckValidEmail(username))
     {
-        // Send error message to signup.js
+        fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+
         console.log("BAD USERNAME");
+
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
                 console.log(err);
@@ -290,8 +295,10 @@ app.post('/signup', async function(req, res){
     //check if email is valid (length, VALID EMAIL)
     else if((email.length > 320) || !CheckValidEmail(email))
     {
-        // Send error message to signup.js
+        fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+
         console.log("BAD EMAIL");
+
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
                 console.log(err);
@@ -319,8 +326,10 @@ app.post('/signup', async function(req, res){
         }
         if (numberOfMatches === -1) // database error
         {
-            // Send error message to signup.js (SERVER ERROR)
+            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
+
             console.log("DATABASE ERROR");
+
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
                     console.log(err);
@@ -329,8 +338,10 @@ app.post('/signup', async function(req, res){
         }
         else if (numberOfMatches !== 0) // other users with the same name/email
         {
-            // Send error message to signup.js (BAD INPUTS)
+            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+
             console.log("EXISTING NAME OR EMAIL");
+
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
                     console.log(err);
@@ -339,10 +350,12 @@ app.post('/signup', async function(req, res){
         }
     
         //check if password is valid (length, check against common passwords)
-        else if((password.length < 15) || CheckCommonPassword(password))
+        else if((password.length < 12) || CheckCommonPassword(password))
         {
-            // Send error message to signup.js (BAD INPUTS)
+            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+
             console.log("SHORT PASSWORD");
+
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
                     console.log(err);
@@ -353,8 +366,10 @@ app.post('/signup', async function(req, res){
         //check if passwords don't match
         else if(password !== passwordC) {
 
-            // Send error message to signup.js (PASSWORDS DONT MATCH)
+            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"mismatchPasswords"}));
+
             console.log("MISMATCHING PASSWORDS");
+
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
                     console.log(err);
@@ -366,45 +381,50 @@ app.post('/signup', async function(req, res){
         {
             //Currently no 2FA, need to change that
 
-            //Make a random string for the salt, then add to the database
-            const newSalt = GenerateSalt();
-            console.log(newSalt);
-
             try {
                 await client.query('SET SEARCH_PATH TO "gameBlog", public;');
                 
-                //find an unused ID
+                //find an unused ID - OLD VERSION
+                // let newUserID = 0;
+
+                // const idCheck = `SELECT "userID" FROM "UsersTable";`;
+                // const idResult = await client.query(idCheck);
+
+                // let usedIDFlag = false;
+                // let unfoundID = true;
+
+                // while (unfoundID)
+                // {
+                //     console.log(newUserID);
+                //     usedIDFlag = false;
+                //     for (let i=0;i<idResult.rows.length;i++)
+                //     {
+                //         console.log("Comparing "+newUserID+" to database's "+parseInt(idResult.rows[i].userID));
+                //         if (parseInt(idResult.rows[i].userID) === newUserID)
+                //         {
+                //             console.log("THEYRE THE SAME");
+                //             usedIDFlag = true;
+                //             break;
+                //         }
+                //     }
+                //     if (!usedIDFlag)
+                //     {
+                //         unfoundID = false;
+                //     }
+                //     else
+                //     {
+                //         newUserID = newUserID + 1;
+                //     }
+                // }
+                
+                //find an unused ID - NEW VERSION
+                const idResult = await client.query(`SELECT "userID" FROM "UsersTable";`);
                 let newUserID = 0;
+                const usedIDs = idResult.rows.map(r => parseInt(r.userID));
+                while (usedIDs.includes(newUserID)) newUserID++;
 
-                const idCheck = `SELECT "userID" FROM "UsersTable";`;
-                const idResult = await client.query(idCheck);
+                const newSalt = GenerateSalt();
 
-                let usedIDFlag = false;
-                let unfoundID = true;
-
-                while (unfoundID)
-                {
-                    console.log(newUserID);
-                    usedIDFlag = false;
-                    for (let i=0;i<idResult.rows.length;i++)
-                    {
-                        console.log("Comparing "+newUserID+" to database's "+parseInt(idResult.rows[i].userID));
-                        if (parseInt(idResult.rows[i].userID) === newUserID)
-                        {
-                            console.log("THEYRE THE SAME");
-                            usedIDFlag = true;
-                            break;
-                        }
-                    }
-                    if (!usedIDFlag)
-                    {
-                        unfoundID = false;
-                    }
-                    else
-                    {
-                        newUserID = newUserID + 1;
-                    }
-                }   
 
                 const newUser = `INSERT INTO "UsersTable"("userID", "userName", "userEmail", "userPassHash", "userType")
                     VALUES ($1, $2, $3, $4, 'Standard');`;
@@ -415,8 +435,11 @@ app.post('/signup', async function(req, res){
                     VALUES ($1, $2);`;
                 const newUserSaltValues = [newUserID, newSalt];
                 await client.query(newUserSalt, newUserSaltValues);
+                
+                fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
 
                 console.log("GREAT SUCCESS");
+
                 //TEMPORARY - send you to login page to login to your new account
                 res.sendFile(__dirname + '/public/html/login.html', (err) => {
                     if (err){
@@ -426,8 +449,10 @@ app.post('/signup', async function(req, res){
 
             } catch (error) {
                 console.error(error);
-                // Send error message to signup.js (SERVER ERROR)
+                fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
+
                 console.log("DATABASE ERROR BUT VALID INFO");
+
                 res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                     if (err){
                         console.log(err);
