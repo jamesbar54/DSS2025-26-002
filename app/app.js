@@ -81,6 +81,19 @@ passport.use(new GoogleStrategy({
             //user already exists, log in
             return done(null, existing.rows[0]);
         }
+        
+        //checking if email is already registered as normal account
+        const emailCheck = await client.query(
+            `SELECT * FROM "UsersTable" WHERE "userEmail" = $1 AND "oauthProvider" IS NULL`,
+            [profile.emails[0].value]
+        );
+
+        if (emailCheck.rows.length > 0){
+            //deny ouath login as email alredy has an account with password
+            console.log("OAuth login denied - email already registered as regular account:", profile.emails[0].value);
+            return done(null, false, {message: "Email already registered with a standard account"}
+            );
+        }
 
         //new user (creating account)
         //finding lowest unused Uid
