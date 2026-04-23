@@ -189,7 +189,7 @@ function HashString(input)
 }
 
 // Login POST request
-app.post('/login',function(req, res){
+app.post('/login', function(req, res){
 
     // Get username and password entered from user
     var username = req.body.username_input;
@@ -203,7 +203,20 @@ app.post('/login',function(req, res){
             return res;
         }
 
-        client.query(`SELECT * FROM "UsersTable" WHERE "userName" = '${username}' and "userPassHash" = '${password}';`, (err, resp) => {
+        const saltQuery = `SELECT "passSalt" FROM "UserPassSaltsTable" s, "UsersTable" u WHERE s."userID" = u."userID" and u."userName" = $1;`
+        const saltValue = [username]
+        var salt
+        client.query(saltQuery, saltValue, (err, resp) => {
+            console.log(resp.rows[0].passSalt)
+
+            salt = resp.rows[0].passSalt
+
+            console.log(salt)
+
+            const signIn = `SELECT * FROM "UsersTable" WHERE "userName" = $1 and "userPassHash" = $2;`
+            const signInValues = [username, HashString(password + salt)];
+
+            client.query(signIn, signInValues, (err, resp) => {
             if (err) {
                 console.error("Database query error:", err);
                 return res;
@@ -240,6 +253,46 @@ app.post('/login',function(req, res){
                 }
             }
         })
+        })
+
+
+        // client.query(signIn, signInValues, (err, resp) => {
+        //     if (err) {
+        //         console.error("Database query error:", err);
+        //         return res;
+        //     } else {
+        //         console.log(resp.rowCount)
+
+        //         if(resp.rowCount == 1){
+        //             // Update login_attempt with credentials
+        //             let login_attempt = {"username" : username, "password" : password, "success":true};
+        //             let data = JSON.stringify(login_attempt);
+        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+        //             // Update current user upon successful login
+        //             currentUser = req.body.username_input;
+
+        //             // Redirect to home page
+        //             res.sendFile(__dirname + '/public/html/index.html', (err) => {
+        //                 if (err){
+        //                     console.log(err);
+        //                 }
+        //             })
+        //         }else if(resp.rowCount == 0){
+        //             // Update login_attempt with credentials used to log in
+        //             let login_attempt = {"username" : username, "password" : password, "success":false};
+        //             let data = JSON.stringify(login_attempt);
+        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+        //             // Redirect back to login page
+        //             res.sendFile(__dirname + '/public/html/login.html', (err) => {
+        //                 if (err){
+        //                     console.log(err);
+        //                 }
+        //             });
+        //         }
+        //     }
+        // })
     })
 });
 
