@@ -191,57 +191,37 @@ async function HashString(input)
 }
 
 // Login POST request
-app.post('/login', function(req, res){
+app.post('/login', async function(req, res){
 
     // Get username and password entered from user
     var username = req.body.username_input;
-    console.log(username);
+    //console.log(username);
     var password = req.body.password_input;
-    console.log(password);
+    //console.log(password);
 
-    client.query('SET SEARCH_PATH TO "gameBlog", public;', (err) => {
+    client.query('SET SEARCH_PATH TO "gameBlog", public;', async (err) => {
         if (err) {
             console.error("Error setting search path:", err);
             return res;
         }
+        
+        try
+        {
+            var id;
+            var salt;
+            var passHash;
+            
+            //get ID - also filters out Oauth accounts by checking if provider is null
+            const idQuery = `SELECT "userID" FROM "UsersTable" WHERE ("userName" = $1 OR "userEmail" = $1) AND "oauthProvider" IS NULL;`;
+            const idQueryVal = [username];
+            client.query(idQuery, idQueryVal, async (err, resp) => {
+                //console.log("rowCount: " + resp.rowCount);
+                if (resp.rowCount == 0)
+                {
+                    //Username/email not found (or its an Oauth)
+                    //console.log("No username/email, or Oauth");
 
-        const saltQuery = `SELECT "passSalt" FROM "UserPassSaltsTable" s, "UsersTable" u WHERE s."userID" = u."userID" and u."userName" = $1;`
-        const saltValue = [username]
-        var salt
-        client.query(saltQuery, saltValue, (err, resp) => {
-            console.log(resp.rows[0].passSalt)
-
-            salt = resp.rows[0].passSalt
-
-            console.log(salt)
-
-            const signIn = `SELECT * FROM "UsersTable" WHERE "userName" = $1 and "userPassHash" = $2;`
-            const signInValues = [username, HashString(password + salt)];
-
-            client.query(signIn, signInValues, (err, resp) => {
-            if (err) {
-                console.error("Database query error:", err);
-                return res;
-            } else {
-                console.log(resp.rowCount)
-
-                if(resp.rowCount == 1){
-                    // Update login_attempt with credentials
-                    let login_attempt = {"username" : username, "password" : password, "success":true};
-                    let data = JSON.stringify(login_attempt);
-                    fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-                    // Update current user upon successful login
-                    currentUser = req.body.username_input;
-
-                    // Redirect to home page
-                    res.sendFile(__dirname + '/public/html/index.html', (err) => {
-                        if (err){
-                            console.log(err);
-                        }
-                    })
-                }else if(resp.rowCount == 0){
-                    // Update login_attempt with credentials used to log in
+                    //Update login_attempt with credentials used to log in
                     let login_attempt = {"username" : username, "password" : password, "success":false};
                     let data = JSON.stringify(login_attempt);
                     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
@@ -253,9 +233,150 @@ app.post('/login', function(req, res){
                         }
                     });
                 }
-            }
-        })
-        })
+                else
+                {
+                    id = resp.rows[0].userID;
+                    //console.log("id: " + id);
+
+
+                    //get passSalt and passHash, from id
+                    const saltHashQuery = `SELECT "passSalt", "userPassHash" FROM "UsersTable" JOIN "UserPassSaltsTable" ON "UsersTable"."userID" = "UserPassSaltsTable"."userID" WHERE "UsersTable"."userID" = $1;`;
+                    const saltHashQueryVal = [id];
+                    client.query(saltHashQuery, saltHashQueryVal, async (err, resp) => {
+                        //console.log("rowCount: " + resp.rowCount);
+                        if (resp.rowCount == 0)
+                        {
+                            //Missing a password and/or salt - if this happens, something's gone very wrong
+                            //console.log("No password/salt");
+
+                            // Update login_attempt with credentials used to log in
+                            let login_attempt = {"username" : username, "password" : password, "success":false};
+                            let data = JSON.stringify(login_attempt);
+                            fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+                            // Redirect back to login page
+                            res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                                if (err){
+                                    console.log(err);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            salt = resp.rows[0].passSalt;
+                            passHash = resp.rows[0].userPassHash;
+
+                            //console.log("sale: " + salt);
+                            //console.log("hash: " + passHash);
+
+
+                            //Use argon2's function to check if the hash is correct
+                            if (await argon2.verify(passHash, (password + salt)))
+                            {
+                                // password match
+                                //console.log("correct password");
+
+                                // Update login_attempt with credentials
+                                let login_attempt = {"username" : username, "password" : password, "success":true};
+                                let data = JSON.stringify(login_attempt);
+                                fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+                                // Update current user upon successful login
+                                currentUser = req.body.username_input;
+
+                                // Redirect to home page
+                                res.sendFile(__dirname + '/public/html/index.html', (err) => {
+                                    if (err){
+                                        console.log(err);
+                                    }
+                                })
+                            }
+                            else
+                            {
+                                // password did not match
+                                //console.log("incorrect password");
+
+                                // Update login_attempt with credentials used to log in
+                                let login_attempt = {"username" : username, "password" : password, "success":false};
+                                let data = JSON.stringify(login_attempt);
+                                fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+                                // Redirect back to login page
+                                res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                                    if (err){
+                                        console.log(err);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+
+  
+
+
+        }
+        catch (error)
+        {
+            console.error(error);
+            return;
+        }
+
+
+        // ------ JAMES's method (pre-hash) ------
+
+        // const saltQuery = `SELECT "passSalt" FROM "UserPassSaltsTable" s, "UsersTable" u WHERE s."userID" = u."userID" and u."userName" = $1;`
+        // const saltValue = [username]
+        // var salt
+        // client.query(saltQuery, saltValue, (err, resp) => {
+        //     console.log(resp.rows[0].passSalt)
+
+        //     salt = resp.rows[0].passSalt
+
+        //     console.log(salt)
+
+        //     const signIn = `SELECT * FROM "UsersTable" WHERE "userName" = $1 and "userPassHash" = $2;`
+        //     const signInValues = [username, HashString(password + salt)];
+
+        //     client.query(signIn, signInValues, (err, resp) => {
+        //     if (err) {
+        //         console.error("Database query error:", err);
+        //         return res;
+        //     } else {
+        //         console.log(resp.rowCount)
+
+        //         if(resp.rowCount == 1){
+        //             // Update login_attempt with credentials
+        //             let login_attempt = {"username" : username, "password" : password, "success":true};
+        //             let data = JSON.stringify(login_attempt);
+        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+        //             // Update current user upon successful login
+        //             currentUser = req.body.username_input;
+
+        //             // Redirect to home page
+        //             res.sendFile(__dirname + '/public/html/index.html', (err) => {
+        //                 if (err){
+        //                     console.log(err);
+        //                 }
+        //             })
+        //         }else if(resp.rowCount == 0){
+        //             // Update login_attempt with credentials used to log in
+        //             let login_attempt = {"username" : username, "password" : password, "success":false};
+        //             let data = JSON.stringify(login_attempt);
+        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+        //             // Redirect back to login page
+        //             res.sendFile(__dirname + '/public/html/login.html', (err) => {
+        //                 if (err){
+        //                     console.log(err);
+        //                 }
+        //             });
+        //         }
+        //     }
+        // })
+        // })
 
 
         // client.query(signIn, signInValues, (err, resp) => {
