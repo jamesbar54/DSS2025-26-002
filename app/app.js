@@ -11,6 +11,7 @@ const session = require('express-session'); //session management
 
 
 const crypto = require('crypto'); //Node.js module for hashing / random number generating
+const argon2 = require('argon2'); //for hashing
 
 //Database connection
 const { Pool } = require('pg');
@@ -183,9 +184,10 @@ let currentUser = null;
 
 //Function for hashing an input string
 //currently does literally nothing
-function HashString(input)
+async function HashString(input)
 {
-    return input;
+    const hashOut = await argon2.hash(input);
+    return hashOut;
 }
 
 // Login POST request
@@ -494,7 +496,8 @@ app.post('/signup', async function(req, res){
 
                 const newUser = `INSERT INTO "UsersTable"("userID", "userName", "userEmail", "userPassHash", "userType")
                     VALUES ($1, $2, $3, $4, 'Standard');`;
-                const newUserValues = [newUserID, username, email, HashString(password + newSalt)];
+
+                const newUserValues = [newUserID, username, email, await HashString(password + newSalt)];
                 await client.query(newUser, newUserValues);
 
                 const newUserSalt = `INSERT INTO "UserPassSaltsTable"("userID", "passSalt")
