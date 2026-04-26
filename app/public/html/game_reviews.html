@@ -5,8 +5,10 @@
         <meta charset="utf-8">
         <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico">
         <link rel="stylesheet" href="../css/style.css">
-        <script src="../js/index.js" defer></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <script src="../js/main.js" defer></script>
+        <!-- <script src="../js/games.js" defer></script> -->
+        <script src="../js/reviews.js" defer></script>
     </head>
     <body>
         <header>
@@ -22,32 +24,23 @@
 
         <nav>
             <ul>
-                <li class="active"><a href="../html/index.html">Home</a></li>
+                <li><a href="../html/index.html">Home</a></li>
                 <li><a href="../html/posts.html">Latest Posts</a></li>
                 <li><a href="../html/my_posts.html">My Posts</a></li>
-                <li><a href="../html/games.html">Games & Reviews</a></li>
+                <li class="active"><a href="../html/games.html">Games & Reviews</a></li>
             </ul>
         </nav>
 
         <main>
-            
-            <section>
-                <h2>Feel like sharing?</h2>
-                <p>Make a post about a game you love!</p>
-                <p><a class="link_btn" href="../html/my_posts.html">Make a Post</a></p>
-                <p>Review a game that you played, and let us know what you think!</p>
-                <p><a class="link_btn" href="../html/review.html">Review a Game</a></p>
-            </section>
+            <section id="gameList">
+                <h2 id="reviewGameName">Name</h2>
+                <h4>If you haven't already, review this game!</h4>
+                <p><a class="link_btn" href="../html/review.html">Review a game</a></p>
+                <i class="fa fa-search" aria-hidden="true"></i>
+                <input class="search_bar" id="search" name="search" type="text" placeholder="Search Reviews...">
 
-            <section id="postsList">
-                <h2>Latest Posts</h2>
-                <p>See the latest post about your favourite games!</p>
-
-                <p><a class="link_btn" href="../html/posts.html">See More Posts</a></p>
+                <br id="br"> 
             </section>
         </main>
-        <footer>
-            
-        </footer>
     </body>
 </html>

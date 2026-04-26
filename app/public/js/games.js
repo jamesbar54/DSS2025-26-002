@@ -1,3 +1,6 @@
+let rating = null;
+let gameRatings = [[]];
+
 function fetchGames(){
     fetch(`/game`)
     .then(response => {
@@ -8,17 +11,35 @@ function fetchGames(){
             return response.json();
         })
     .then(data => {
-        console.log(data)
         let gameList = document.getElementById('gameList');
         for(let i = 0; i < data.length; i++) {
             let name = data[i].gameName;
             let gameDesc = data[i].gameDesc;
             let gameImg = data[i].gameImgUrl
-            //random for now, until I fetch data for ratings 
-            let rating = "User Rating: " + Math.floor(Math.random() * 10)
-
+            let gameID = data[i].gameID;
+            let ratingNo = null;
+            for (let j = 0; j < gameRatings.length; j++) {
+                if (gameRatings[j][0] === gameID) {
+                    ratingNo = gameRatings[j][1];
+                    rating = "Average User Rating: " + parseFloat(ratingNo).toFixed(2);
+                    break;
+                }else{
+                    rating = "No Ratings";
+                }
+            }
             let gameContainer = document.createElement('article');
             gameContainer.classList.add("games");
+            if(ratingNo >= 7){
+                gameContainer.style.backgroundColor = "#ccedc7";
+            }else if(ratingNo < 7 && ratingNo >= 5){
+                gameContainer.style.backgroundColor = "#e6e5be";
+            }else if(ratingNo < 5){
+                gameContainer.style.backgroundColor = "#e3b8aa";
+            }else if (ratingNo == null){
+                gameContainer.style.backgroundColor = "white";
+            }
+
+
             let fig = document.createElement('figure');
             fig.className = "gameFig";
             gameContainer.appendChild(fig);
@@ -50,7 +71,10 @@ function fetchGames(){
             reviewsbtnwrapper.className = 'reviewbtnwrapper'
             reviewsbtn.className = 'review_btn'
             reviewsbtn.textContent = 'View Reviews'
-
+            //go to game reviews page when pressing "view reviews"
+            reviewsbtn.addEventListener("click", function(){
+                goToReviews(gameID)
+            })
             reviewsbtnwrapper.appendChild(reviewsbtn)
             gameContainer.appendChild(reviewsbtnwrapper)
 
@@ -59,11 +83,28 @@ function fetchGames(){
         
     })
     .catch(error => console.error('Error fetching search results:', error));
-
-    
 }
 
-fetchGames();
+async function fetchGameScore() {
+    const response = await fetch(`/gamescoreaverage`);
+
+    if (!response.ok){
+     return;
+    }
+
+    const data = await response.json();
+
+    for (let i = 0; i < data.length; i++) {
+        gameRatings.push([data[i].gameID, data[i].averageScore]);
+    }
+
+    console.log(gameRatings);
+}
+
+function goToReviews(gameID){
+    console.log("You pressed on " + gameID)
+    window.location.href = `http://localhost:3000/html/game_reviews.html?g=${gameID}`;
+}
 
 // Function to filter posts on page using search bar
 function searchPosts() {
@@ -97,3 +138,10 @@ function searchPosts() {
 if(document.getElementById("search")) {
     document.getElementById("search").addEventListener("keyup", searchPosts);
 }
+
+async function fetchGamesandScores(){
+    await fetchGameScore();
+    fetchGames();
+}
+
+fetchGamesandScores();

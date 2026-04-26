@@ -171,6 +171,69 @@ app.get('/game', (req, res) => {
     })
 })
 
+//game review page to grab the data of the game
+app.get('/gamereview', async (req, res) => {
+    const gameID = req.query.g;
+    console.log(gameID)
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const gameDetails = await client.query(`SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."gameID" = $1`, [gameID]) 
+        res.status(200).json(gameDetails.rows);  
+    } catch(err){
+        console.error(err);
+        res.status(500).json({ error: "There was an error with the server" });
+    }
+
+})
+
+app.get('/gamereviewname', async (req, res) => {
+    const gameID = req.query.g;
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const gameName = await client.query(`SELECT "gameName" FROM "GamesTable" WHERE "gameID" = $1`, [gameID])
+        res.status(200).json(gameName.rows);
+    }catch(err){
+        console.error(err);
+        res.status(500).json({error: "There was an error with the server"})
+    }
+}) 
+    
+app.get('/gamescoreaverage', async (req,res) => {
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const gameScore = await client.query(`SELECT "PostsTable"."gameID", AVG("postReviewScore") AS "averageScore" FROM "PostsTable" JOIN "GamesTable" ON "PostsTable"."gameID" = "GamesTable"."gameID" WHERE "postType" = 'Review' GROUP BY "PostsTable"."gameID"`)
+        res.status(200).json(gameScore.rows)
+    }catch(err){
+        console.error(err);
+        res.status(500).json({error: "There was an error with the server"})
+    }
+})
+
+app.get('/getmyposts', async (req, res) => {
+
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const getMyPosts = await client.query(`SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Standard' AND "UsersTable"."userName" = $1`, [currentUser])
+        res.status(200).json(getMyPosts.rows)
+    }catch(err){
+        console.error(err);
+        res.status(500).json({error: "There was an error with the server"})
+    }
+})
+
+app.get('/getmyreviews', async (req, res) => {
+
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const getMyPosts = await client.query(`SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Review' AND "UsersTable"."userName" = $1`, [currentUser])
+        res.status(200).json(getMyPosts.rows)
+    }catch(err){
+        console.error(err);
+        res.status(500).json({error: "There was an error with the server"})
+    }
+})
+
+
 // Reset login_attempt.json when server restarts
 let login_attempt = {"username" : "null", "password" : "null", "success":false};
 let data = JSON.stringify(login_attempt);
@@ -688,7 +751,7 @@ app.post('/makepost', async function(req, res) {
     client.query('SET SEARCH_PATH TO "gameBlog", public;', (err) => {
         if (err) {
             console.error("Error setting search path:", err);
-            return res;
+            return res.status(500).json({ error: "Database query error" });
         }
         // Selects everything from postsTable, username ONLY from userstable and does it with the userID from the poststable
         // It joins the 2 tables to get the username from userstable since posts only store userID

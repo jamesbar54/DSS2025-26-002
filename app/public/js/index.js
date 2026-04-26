@@ -1,13 +1,5 @@
 // Function to add the latest 2 posts to the home page
 async function loadLatestPosts() {
-
-    // Load posts data
-    const post_response = await fetch("../json/posts.json");
-    const post_data = await post_response.json();
-
-    const login_response = await fetch("../json/login_attempt.json");
-    const login_data = await login_response.json();
-
     // Remove current posts from page
     let postList = document.getElementById('postsList');
 
@@ -18,47 +10,66 @@ async function loadLatestPosts() {
     }
 
     // Load latest 2 posts
-    for(let i = post_data.length - 1; i > post_data.length - 3; i--) {
-        let author = post_data[i].username;
-        let timestamp = post_data[i].timestamp;
-        let title = post_data[i].title;
-        let content = post_data[i].content;
-        let postId = post_data[i].postId;
+    fetch(`/getposts`)
+    .then(response => {
+            if (!response.ok) {
+                console.error('Server returned an error:', response.statusText);
+                throw new Error('Failed to fetch search results');
+            }
+            return response.json();
+        })
+    .then(data => {
+        console.log(data)
+        let postList = document.getElementById('postsList');
+        for(let i = data.length - 1; i > data.length - 3; i--) {
+            let author = data[i].userName;
+            let time = data[i].timestamp;
+            let date = new Date(time)
+            let timestamp = date.toLocaleString("en-gb")
+            let title = data[i].postTitle;
+            let content = data[i].postContent;
+            let postID = data[i].postID;
+            console.log(timestamp)
+            console.log(title)
+            console.log(content)
+            console.log(postID)
+            let postContainer = document.createElement('article');
+            postContainer.classList.add("post");
+            let fig = document.createElement('figure');
+            postContainer.appendChild(fig);
 
-        let postContainer = document.createElement('article');
-        postContainer.classList.add("post");
-        let fig = document.createElement('figure');
-        postContainer.appendChild(fig);
+            let postIdContainer = document.createElement("p");
+            postIdContainer.textContent = postID;
+            postIdContainer.hidden = true;
+            postID.id = "postId";
+            postContainer.appendChild(postIdContainer);
 
-        let postIdContainer = document.createElement("p");
-        postIdContainer.textContent = postId;
-        postIdContainer.hidden = true;
-        postId.id = "postId";
-        postContainer.appendChild(postIdContainer);
+            let img = document.createElement('img');
+            let figcap = document.createElement('figcaption');
+            fig.appendChild(img);
+            fig.appendChild(figcap);
+            
+            let titleContainer = document.createElement('h3');
+            titleContainer.textContent = title;
+            figcap.appendChild(titleContainer);
+            
+            let usernameContainer = document.createElement('h5');
+            usernameContainer.textContent = author;
+            figcap.appendChild(usernameContainer);
 
-        let img = document.createElement('img');
-        let figcap = document.createElement('figcaption');
-        fig.appendChild(img);
-        fig.appendChild(figcap);
-        
-        let titleContainer = document.createElement('h3');
-        titleContainer.textContent = title;
-        figcap.appendChild(titleContainer);
-        
-        let usernameContainer = document.createElement('h5');
-        usernameContainer.textContent = author;
-        figcap.appendChild(usernameContainer);
+            let timeContainer = document.createElement('h5');
+            timeContainer.textContent = timestamp;
+            figcap.appendChild(timeContainer);
 
-        let timeContainer = document.createElement('h5');
-        timeContainer.textContent = timestamp;
-        figcap.appendChild(timeContainer);
+            let contentContainer = document.createElement('p');
+            contentContainer.textContent = content;
+            figcap.appendChild(contentContainer);
 
-        let contentContainer = document.createElement('p');
-        contentContainer.textContent = content;
-        figcap.appendChild(contentContainer);
-
-        postList.insertBefore(postContainer, postList.querySelectorAll("section > p")[1]);
+            postList.insertBefore(postContainer, postList.querySelectorAll("section > p")[1]);
     }
+        
+    })
+    .catch(error => console.error('Error fetching search results:', error));
 }
 
 loadLatestPosts();

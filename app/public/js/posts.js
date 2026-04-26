@@ -77,7 +77,9 @@ async function getPosts(){
         let postList = document.getElementById('postsList');
         for(let i = 0; i < data.length; i++) {
             let author = data[i].userName;
-            let timestamp = data[i].timestamp;
+            let time = data[i].timestamp;
+            let date = new Date(time)
+            let timestamp = date.toLocaleString("en-gb")
             let title = data[i].postTitle;
             let content = data[i].postContent;
             let postID = data[i].postID;

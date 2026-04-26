@@ -1,44 +1,33 @@
 // Function to load posts made by user who is currently logged in
 async function loadPosts() {
-
-    // Load posts data
-    const post_response = await fetch("../json/posts.json");
-    const post_data = await post_response.json();
-
-    // Load login data
-    const login_response = await fetch("../json/login_attempt.json");
-    const login_data = await login_response.json();
-
-    // Remove current posts
-    let postList = document.getElementById('myPosts');
-
-    for(let i = 0; i < postList.children.length; i++) {
-        if(postList.children[i].nodeName == "article") {
-            postList.removeChild(postList.children[i]);
-        }
-    }
-
-    // Add posts made by current user
-    for(let i = 0; i < post_data.length; i++) {
-        
-        let author = post_data[i].username;
-
-        // Check usernames match on each post
-        if(author === login_data.username) {
-            let timestamp = post_data[i].timestamp;
-            let title = post_data[i].title;
-            let content = post_data[i].content;
-            let postId = post_data[i].postId;
-
+    fetch(`/getmyposts`)
+    .then(response => {
+            if (!response.ok) {
+                console.error('Server returned an error:', response.statusText);
+                throw new Error('Failed to fetch search results');
+            }
+            return response.json();
+        })
+    .then(data => {
+        console.log("ghrsgjawrseghjweaghijk")
+        let postList = document.getElementById('myPosts');
+        for(let i = 0; i < data.length; i++) {
+            let author = data[i].userName;
+            let time = data[i].timestamp;
+            let date = new Date(time)
+            let timestamp = date.toLocaleString("en-gb")
+            let title = data[i].postTitle;
+            let content = data[i].postContent;
+            let postID = data[i].postID;
             let postContainer = document.createElement('article');
             postContainer.classList.add("post");
             let fig = document.createElement('figure');
             postContainer.appendChild(fig);
 
-            let postIdContainer = document.createElement("h6");
-            postIdContainer.textContent = postId;
+            let postIdContainer = document.createElement("p");
+            postIdContainer.textContent = postID;
             postIdContainer.hidden = true;
-            postId.id = "postId";
+            postID.id = "postId";
             postContainer.appendChild(postIdContainer);
 
             let img = document.createElement('img');
@@ -59,28 +48,81 @@ async function loadPosts() {
             figcap.appendChild(timeContainer);
 
             let contentContainer = document.createElement('p');
-            contentContainer.id = "content";
             contentContainer.textContent = content;
             figcap.appendChild(contentContainer);
 
-            let editBtn = document.createElement('button');
-            editBtn.classList.add('editBtn');
-            editBtn.textContent = "Edit";
-            editBtn.addEventListener("click", editPost);
-            postContainer.appendChild(editBtn);
-
-            let delBtn = document.createElement('button');
-            delBtn.classList.add('delBtn');
-            delBtn.textContent = "Delete";
-            delBtn.addEventListener("click", deletePost);
-            postContainer.appendChild(delBtn);
-
             postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
-        }
     }
+        
+    })
+    .catch(error => console.error('Error fetching search results:', error));
 }
 
-loadPosts();
+async function loadReviews(){
+    fetch(`/getmyreviews`)
+    .then(response => {
+        if (!response.ok) {
+            console.error('Server returned an error:', response.statusText);
+            throw new Error('Failed to fetch search results');
+        }
+        return response.json();
+        })
+    .then(data => {
+        let postList = document.getElementById('myReviews');
+        for(let i = 0; i < data.length; i++) {
+            let time = data[i].timestamp;
+            let date = new Date(time)
+            let timestamp = date.toLocaleString("en-gb")
+            let title = data[i].postTitle;
+            let content = data[i].postContent;
+            let postID = data[i].postID;
+            let score = data[i].postReviewScore;
+            let rating = "Your Rating: " + score;
+            let postContainer = document.createElement('article');
+            postContainer.classList.add("post");
+            let fig = document.createElement('figure');
+            postContainer.appendChild(fig);
+
+            let postIdContainer = document.createElement("p");
+            postIdContainer.textContent = postID;
+            postIdContainer.hidden = true;
+            postID.id = "postId";
+            postContainer.appendChild(postIdContainer);
+
+            let img = document.createElement('img');
+            let figcap = document.createElement('figcaption');
+            fig.appendChild(img);
+            fig.appendChild(figcap);
+            
+            let titleContainer = document.createElement('h3');
+            titleContainer.textContent = title;
+            figcap.appendChild(titleContainer);
+
+            let timeContainer = document.createElement('h5');
+            timeContainer.textContent = timestamp;
+            figcap.appendChild(timeContainer);
+
+            let contentContainer = document.createElement('p');
+            contentContainer.textContent = content;
+            figcap.appendChild(contentContainer);
+
+            let ratingContainer = document.createElement('p');
+            ratingContainer.textContent = rating;
+            figcap.appendChild(ratingContainer);
+
+            postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
+    }
+        
+    })
+    .catch(error => console.error('Error fetching search results:', error));
+}
+
+if(document.getElementById('myPosts') != null){
+    loadPosts();
+} else if(document.getElementById('myReviews') != null){
+    loadReviews();
+}
+
 
 // Function to remove a post from the page after clicking delete - this is also reflected on the server side
 function deletePost(e) {
