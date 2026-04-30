@@ -255,7 +255,6 @@ async function HashString(input)
 
 // Login POST request
 app.post('/login', async function(req, res){
-
     // Get username and password entered from user
     var username = req.body.username_input;
     //console.log(username);
@@ -340,12 +339,19 @@ app.post('/login', async function(req, res){
                                 //console.log("correct password");
 
                                 // Update login_attempt with credentials
-                                let login_attempt = {"username" : username, "password" : password, "success":true};
-                                let data = JSON.stringify(login_attempt);
-                                fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+                                // let login_attempt = {"username" : username, "password" : password, "success":true};
+                                // let data = JSON.stringify(login_attempt);
+                                // fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
                                 // Update current user upon successful login
                                 currentUser = req.body.username_input;
+
+                                req.login(user,(err) =>{
+                                    if(err) return next (err);
+                                    res.redirect('/html/index.html');
+                                }); 
+
+                                
 
                                 // Redirect to home page
                                 res.sendFile(__dirname + '/public/html/index.html', (err) => {
