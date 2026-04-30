@@ -339,26 +339,32 @@ app.post('/login', async function(req, res){
                                 //console.log("correct password");
 
                                 // Update login_attempt with credentials
-                                // let login_attempt = {"username" : username, "password" : password, "success":true};
-                                // let data = JSON.stringify(login_attempt);
-                                // fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+                                let login_attempt = {"username" : username, "password" : password, "success":true};
+                                let data = JSON.stringify(login_attempt);
+                                fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+
+
+                                //fetch full user row
+                                const userResult = await client.query(
+                                    `SELECT * FROM "UsersTable" WHERE "userID" = $1`, [id]
+                                );
+                                const user = userResult.rows[0];
+
 
                                 // Update current user upon successful login
                                 currentUser = req.body.username_input;
 
                                 req.login(user,(err) =>{
-                                    if(err) return next (err);
+                                    if(err){
+                                        console.error(err);
+                                        return res.status(500).send('Login error');
+                                    }
                                     res.redirect('/html/index.html');
                                 }); 
 
                                 
 
-                                // Redirect to home page
-                                res.sendFile(__dirname + '/public/html/index.html', (err) => {
-                                    if (err){
-                                        console.log(err);
-                                    }
-                                })
+                                
                             }
                             else
                             {
