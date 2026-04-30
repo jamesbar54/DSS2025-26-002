@@ -253,8 +253,31 @@ async function HashString(input)
     return hashOut;
 }
 
+//For account enumeration - calculates how much time has passed, forces wait until the nearest second
+async function ExtraWait(input)
+{
+    //console.timeLog("a");
+    var delay = performance.now() - input;
+    delay = delay % 1000;
+    delay = 1000 - delay;
+
+    // while (true)
+    // {
+    //     if (performance.now() >= input + delay)
+    //     {
+    //         return;
+    //     }
+    // }
+
+    await new Promise(resolve => setTimeout(resolve, delay));
+    //console.timeEnd("a");
+}
+
 // Login POST request
 app.post('/login', async function(req, res){
+
+    //console.time("a");
+    var startTime = performance.now();
 
     // Get username and password entered from user
     var username = req.body.username_input;
@@ -284,6 +307,8 @@ app.post('/login', async function(req, res){
                     //Username/email not found (or its an Oauth)
                     //console.log("No username/email, or Oauth");
 
+                    await ExtraWait(startTime);
+
                     //Update login_attempt with credentials used to log in
                     let login_attempt = {"username" : username, "password" : password, "success":false};
                     let data = JSON.stringify(login_attempt);
@@ -312,6 +337,8 @@ app.post('/login', async function(req, res){
                             //Missing a password and/or salt - if this happens, something's gone very wrong
                             //console.log("No password/salt");
 
+                            await ExtraWait(startTime);
+
                             // Update login_attempt with credentials used to log in
                             let login_attempt = {"username" : username, "password" : password, "success":false};
                             let data = JSON.stringify(login_attempt);
@@ -339,6 +366,8 @@ app.post('/login', async function(req, res){
                                 // password match
                                 //console.log("correct password");
 
+                                await ExtraWait(startTime);
+
                                 // Update login_attempt with credentials
                                 let login_attempt = {"username" : username, "password" : password, "success":true};
                                 let data = JSON.stringify(login_attempt);
@@ -358,6 +387,8 @@ app.post('/login', async function(req, res){
                             {
                                 // password did not match
                                 //console.log("incorrect password");
+
+                                await ExtraWait(startTime);
 
                                 // Update login_attempt with credentials used to log in
                                 let login_attempt = {"username" : username, "password" : password, "success":false};
@@ -508,6 +539,8 @@ function GenerateSalt()
 // signup POST request
 app.post('/signup', async function(req, res){
 
+    var startTime = performance.now();
+
     //gets inputted fields
     var username = req.body.username_input;
     var email = req.body.email_input;
@@ -517,9 +550,11 @@ app.post('/signup', async function(req, res){
     //check if any null fields
     if (username === "" || email === "" || password === "" || passwordC === "")
     {
+        await ExtraWait(startTime);
+
         fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"nullFields"}));
 
-        console.log("NULL FIELDS"); //These console.logs are temporary and for debugging
+        //console.log("NULL FIELDS"); //These console.logs are temporary and for debugging
         // Redirect to signup
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
@@ -534,9 +569,11 @@ app.post('/signup', async function(req, res){
     //check if username is valid (length, NOT A VALID EMAIL)
     else if((username.length > 32) || CheckValidEmail(username))
     {
+        await ExtraWait(startTime);
+
         fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-        console.log("BAD USERNAME");
+        //console.log("BAD USERNAME");
 
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
@@ -547,9 +584,11 @@ app.post('/signup', async function(req, res){
     //check if email is valid (length, VALID EMAIL)
     else if((email.length > 320) || !CheckValidEmail(email))
     {
+        await ExtraWait(startTime);
+
         fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-        console.log("BAD EMAIL");
+        //console.log("BAD EMAIL");
 
         res.sendFile(__dirname + '/public/html/signup.html', (err) => {
             if (err){
@@ -578,9 +617,11 @@ app.post('/signup', async function(req, res){
         }
         if (numberOfMatches === -1) // database error
         {
+            await ExtraWait(startTime);
+
             fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
 
-            console.log("DATABASE ERROR");
+            //console.log("DATABASE ERROR");
 
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
@@ -590,9 +631,11 @@ app.post('/signup', async function(req, res){
         }
         else if (numberOfMatches !== 0) // other users with the same name/email
         {
+            await ExtraWait(startTime);
+            
             fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-            console.log("EXISTING NAME OR EMAIL");
+            //console.log("EXISTING NAME OR EMAIL");
 
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
@@ -604,9 +647,11 @@ app.post('/signup', async function(req, res){
         //check if password is valid (length, check against common passwords)
         else if((password.length < 12) || CheckCommonPassword(password))
         {
+            await ExtraWait(startTime);
+
             fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-            console.log("SHORT PASSWORD");
+            //console.log("SHORT PASSWORD");
 
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
@@ -616,11 +661,13 @@ app.post('/signup', async function(req, res){
         }
 
         //check if passwords don't match
-        else if(password !== passwordC) {
+        else if(password !== passwordC)
+        {
+            await ExtraWait(startTime);
 
             fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"mismatchPasswords"}));
 
-            console.log("MISMATCHING PASSWORDS");
+            //console.log("MISMATCHING PASSWORDS");
 
             res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                 if (err){
@@ -689,9 +736,13 @@ app.post('/signup', async function(req, res){
                 const newUserSaltValues = [newUserID, newSalt];
                 await client.query(newUserSalt, newUserSaltValues);
                 
+
+
+                await ExtraWait(startTime);
+
                 fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
 
-                console.log("GREAT SUCCESS");
+                //console.log("GREAT SUCCESS");
 
                 //TEMPORARY - send you to login page to login to your new account
                 res.sendFile(__dirname + '/public/html/login.html', (err) => {
@@ -701,10 +752,12 @@ app.post('/signup', async function(req, res){
                 });
 
             } catch (error) {
+                await ExtraWait(startTime);
+
                 console.error(error);
                 fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
 
-                console.log("DATABASE ERROR BUT VALID INFO");
+                //console.log("DATABASE ERROR BUT VALID INFO");
 
                 res.sendFile(__dirname + '/public/html/signup.html', (err) => {
                     if (err){
