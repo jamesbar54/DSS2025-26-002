@@ -373,15 +373,28 @@ app.post('/login', async function(req, res){
                                 let data = JSON.stringify(login_attempt);
                                 fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
+
+                                //fetch full user row
+                                const userResult = await client.query(
+                                    `SELECT * FROM "UsersTable" WHERE "userID" = $1`, [id]
+                                );
+                                const user = userResult.rows[0];
+
+
                                 // Update current user upon successful login
                                 currentUser = req.body.username_input;
 
-                                // Redirect to home page
-                                res.sendFile(__dirname + '/public/html/index.html', (err) => {
-                                    if (err){
-                                        console.log(err);
+                                req.login(user,(err) =>{
+                                    if(err){
+                                        console.error(err);
+                                        return res.status(500).send('Login error');
                                     }
-                                })
+                                    res.redirect('/html/index.html');
+                                }); 
+
+                                
+
+                                
                             }
                             else
                             {
