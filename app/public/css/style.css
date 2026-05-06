@@ -89,6 +89,10 @@ body {
         background-color: #297b7c;
     }
 
+    #account_text {
+        text-transform: uppercase;
+    }
+
     #google_btn {
     display: inline-block;
     background-color: #4285F4;
@@ -101,6 +105,7 @@ body {
     text-decoration: none;
     margin-top: 10px;
     transition: background 300ms ease-in-out;
+
 }
 
 #google_btn:hover {

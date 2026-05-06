@@ -5,9 +5,10 @@
         <meta charset="utf-8">
         <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico">
         <link rel="stylesheet" href="../css/style.css">
+        <link rel="stylesheet" href="../css/account.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-        <script src="../js/posts.js" defer></script>
         <script src="../js/main.js" defer></script>
+        <script src="../js/account.js" defer></script>
     </head>
     <body>
         <header>
@@ -25,20 +26,18 @@
         <nav>
             <ul>
                 <li><a href="../html/index.html">Home</a></li>
-                <li class="active"><a href="../html/posts.html">Latest Posts</a></li>
+                <li><a href="../html/posts.html">Latest Posts</a></li>
                 <li><a href="../html/my_posts.html">My Posts</a></li>
                 <li><a href="../html/games.html">Games & Reviews</a></li>
             </ul>
         </nav>
 
         <main>
-            <section id="postsList">
-                <h2>Latest Posts</h2>
-                <p>See the latest post about your favourite games!</p>
-
-                <i class="fa fa-search" aria-hidden="true"></i>
-                <input class="search_bar" id="search" name="search" type="text" placeholder="Search posts...">
+            <section>
+                <p id="account_text">Username</p>
+                <button id="dlt_btn">DELETE ACCOUNT</button>
             </section>
         </main>
+
     </body>
 </html>
