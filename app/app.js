@@ -8,6 +8,16 @@ const port = 3000;
 const passport = require('passport'); //middleware library to handle oauth
 const GoogleStrategy = require('passport-google-oauth20').Strategy; //oauth passport strategy
 const session = require('express-session'); //session management
+const rateLimit = require('express-rate-limit')
+
+const limiter = rateLimit({
+	windowMs: 3 * 60 * 1000, // 3 minutes
+	limit: 10, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+	standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+	ipv6Subnet: 56, // Set to 60 or 64 to be less aggressive, or 52 or 48 to be more aggressive
+	message: {error: 'Too many requests, please try again later.'}
+})
 
 
 const crypto = require('crypto'); //Node.js module for hashing / random number generating
@@ -210,10 +220,15 @@ app.get('/gamescoreaverage', async (req,res) => {
 })
 
 app.get('/getmyposts', async (req, res) => {
-
+    const userID = req.user?.userID;
+    console.log(userID)
+    if(userID == null){
+        return res.status(401).json({ error: "Not logged in" });
+    }
     try{
+        
         await client.query('SET SEARCH_PATH TO "gameBlog", public;')
-        const getMyPosts = await client.query(`SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Standard' AND "UsersTable"."userName" = $1`, [currentUser])
+        const getMyPosts = await client.query(`SELECT * FROM "PostsTable" WHERE "postType" = 'Standard' AND "userID" = $1`, [userID])
         res.status(200).json(getMyPosts.rows)
     }catch(err){
         console.error(err);
@@ -222,10 +237,13 @@ app.get('/getmyposts', async (req, res) => {
 })
 
 app.get('/getmyreviews', async (req, res) => {
-
+    const userID = req.user?.userID;
+    if(userID == null){
+        return res.status(401).json({ error: "Not logged in" });
+    }
     try{
         await client.query('SET SEARCH_PATH TO "gameBlog", public;')
-        const getMyPosts = await client.query(`SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Review' AND "UsersTable"."userName" = $1`, [currentUser])
+        const getMyPosts = await client.query(`SELECT * FROM "PostsTable" WHERE "postType" = 'Review' AND "userID" = $1`, [userID])
         res.status(200).json(getMyPosts.rows)
     }catch(err){
         console.error(err);
@@ -333,7 +351,7 @@ async function ExtraWait(input)
 }
 
 // Login POST request
-app.post('/login', async function(req, res){
+app.post('/login', limiter, async function(req, res){
 
     //console.time("a");
     var startTime = performance.now();
@@ -342,6 +360,7 @@ app.post('/login', async function(req, res){
     var username = req.body.username_input;
     //console.log(username);
     var password = req.body.password_input;
+
     //console.log(password);
 
     client.query('SET SEARCH_PATH TO "gameBlog", public;', async (err) => {
@@ -609,7 +628,7 @@ function GenerateSalt()
 }
 
 // signup POST request
-app.post('/signup', async function(req, res){
+app.post('/signup', limiter, async function(req, res){
 
     var startTime = performance.now();
 
@@ -842,29 +861,36 @@ app.post('/signup', async function(req, res){
 });
 
 // Make a post POST request
-app.post('/makepost', async function(req, res) {
+app.post('/makepost', limiter, async function(req, res) {
 
     let curDate = new Date();
     curDate = curDate.toLocaleString("en-GB");
     const {title, content, postType, rating} = req.body
     try{
         await client.query('SET SEARCH_PATH TO "gameBlog", public;')
-        const userID = await client.query(`SELECT "userID" FROM "UsersTable" WHERE "userName" = $1`, [currentUser]);
+        const userID = req.user?.userID;
+        if(userID == null){
+            return res.status(401).json({ error: "Not logged in" });
+        }
         const postID = await client.query(`SELECT MAX("postID") AS "maxPostID" FROM "PostsTable";`);
 
         if(postType == 'Review'){
-            
             const gameID = await client.query(`SELECT "gameID" FROM "GamesTable" WHERE "gameName" = $1`, [title]);
+            const duplicateReview = await client.query(`SELECT * FROM "PostsTable"  WHERE "userID" = $1 AND "gameID" = $2`, [userID, gameID.rows[0].gameID]);
+
+            if (duplicateReview.rowCount > 0) {
+                return res.status(400).send("You have already reviewed this game.");
+            }
             const createReview = `INSERT INTO "PostsTable"("postID", "userID", "gameID", "postType", "postTitle", "postContent", "postReviewScore", timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
-            reviewVals = [postID.rows[0].maxPostID + 1, userID.rows[0].userID, gameID.rows[0].gameID, postType, title, content, rating, curDate]
+            reviewVals = [postID.rows[0].maxPostID + 1, userID, gameID.rows[0].gameID, postType, title, content, rating, curDate]
             await client.query(createReview, reviewVals);
 
         }else if(postType == 'Standard'){
             const createPost = `INSERT INTO "PostsTable"("postID", "userID", "postType", "postTitle", "postContent", timestamp) VALUES ($1, $2, $3, $4, $5, $6)`;
-            postVals = [postID.rows[0].maxPostID + 1, userID.rows[0].userID, postType, title, content, curDate]
+            postVals = [postID.rows[0].maxPostID + 1, userID, postType, title, content, curDate]
             await client.query(createPost, postVals);
         }
-        res.status(201).json({message: "it worked yippee"})
+        res.status(201).send("Posted successfully")
     }catch(error){
         console.error(error);
         res.status(500).json({ error: "There was an error with the server" });

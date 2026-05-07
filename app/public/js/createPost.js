@@ -3,8 +3,8 @@ function createPost(){
     const content = document.getElementById("content_field").value;
     const postType = document.getElementById("postType").value;
     let rating = null;
-    if(document.getElementById("rating_field") != null){
-        rating = document.getElementById("rating_field").value;
+    if(document.getElementById("rating_select") != null){
+        rating = document.getElementById("rating_select").value;
     }
     fetch("/makepost", {
         method: "POST",
@@ -18,11 +18,24 @@ function createPost(){
             rating: rating
         })
     })
-    .then(response => {
+    .then(async response => {
+        const resp = await response.text();
+        if (!response.ok) {
+            document.getElementById("errortext").textContent = resp;
+            throw new Error(err);
+        }
     if(response.status == '201'){
-       setTimeout(() => {
+        document.getElementById("successtext").textContent = resp;
+        if(postType == 'Standard'){
+            title.value = "";
+            content.value = "";
+        }else{
+            content.value = "";
+        }
+        
+        setTimeout(() => {
             location.reload();
-        }, 2000);
+        }, 1000);
         
     }
     response.json()})
