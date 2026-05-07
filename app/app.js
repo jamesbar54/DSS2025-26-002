@@ -627,7 +627,7 @@ function CheckCommonPassword(input)
     }
     else
     {
-        const wholeText = fs.readFileSync("app/10k-most-common.txt", "utf-8");
+        const wholeText = fs.readFileSync("10k-most-common.txt", "utf-8");
         const lines = wholeText.split("\n");
 
         for (let i=0;i<lines.length;i++)
