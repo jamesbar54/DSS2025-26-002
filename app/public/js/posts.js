@@ -74,6 +74,7 @@ async function getPosts(){
         })
     .then(data => {
         console.log(data)
+
         let postList = document.getElementById('postsList');
         for(let i = 0; i < data.length; i++) {
             let author = data[i].userName;
@@ -119,7 +120,7 @@ async function getPosts(){
             contentContainer.textContent = content;
             figcap.appendChild(contentContainer);
 
-            postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
+            postList.insertBefore(postContainer, postList.querySelectorAll("section > p")[1]);
     }
         
     })

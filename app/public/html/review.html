@@ -41,10 +41,23 @@
                     <fieldset>
                         <legend>Review a Game</legend>
                             <label for="title_field">Game:</label>
-                            <input id="title_field" name="title_field" type="text" placeholder="Game Name" required>
+                            <!-- <input id="title_field" name="title_field" type="text" placeholder="Game Name" required> -->
+                            <select id="title_field" class="selectR" name="title_field"  required>
+                            </select>
 
-                            <label for="rating_field">Rating:</label>
-                            <input id="rating_field" name="title_field" type="number" placeholder="Score" required>
+                            <label for="rating_select">Rating:</label>
+                            <select id="rating_select" class="selectR" name="rating_field" default="1" required>
+                                <option value=1>1</option>
+                                <option value=2>2</option>
+                                <option value=3>3</option>
+                                <option value=4>4</option>
+                                <option value=5>5</option>
+                                <option value=6>6</option>
+                                <option value=7>7</option>
+                                <option value=8>8</option>
+                                <option value=9>9</option>
+                                <option value=10>10</option>
+                            </select>
 
                             <label for="content_field">Review:</label>
                             <textarea id="content_field" name="content_field" placeholder="Write your thoughts here.." required></textarea>
@@ -54,6 +67,8 @@
                             <input id="postType" name="type" value="Review" type="hidden">
                             
                             <button type="submit" id="post_button">Post</button>
+                            <div id="errortext" class="error"></div>
+                            <div id="successtext"></div>
                     </fieldset>
                 </form>
             </section>

@@ -34,12 +34,9 @@ function fetchGame(){
             fig.className = "gameFig";
             gameContainer.appendChild(fig);
 
-
-
             let figcap = document.createElement('figcaption');
             figcap.className = "gameFigCap"
             fig.appendChild(figcap);
-
 
             let nameContainer = document.createElement('h3');
             nameContainer.textContent = name;
@@ -56,7 +53,6 @@ function fetchGame(){
             let ratingContainer = document.createElement('p');
             ratingContainer.textContent = rating;
             figcap.appendChild(ratingContainer);
-            //go to game reviews page when pressing "view reviews"
 
             gameList.insertBefore(gameContainer, document.getElementById("br")[0]);
         }

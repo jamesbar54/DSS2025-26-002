@@ -27,18 +27,18 @@ function fetchGames(){
                     rating = "No Ratings";
                 }
             }
+            
             let gameContainer = document.createElement('article');
             gameContainer.classList.add("games");
             if(ratingNo >= 7){
                 gameContainer.style.backgroundColor = "#ccedc7";
             }else if(ratingNo < 7 && ratingNo >= 5){
                 gameContainer.style.backgroundColor = "#e6e5be";
-            }else if(ratingNo < 5){
+            }else if(ratingNo < 5 && ratingNo != null){
                 gameContainer.style.backgroundColor = "#e3b8aa";
             }else if (ratingNo == null){
                 gameContainer.style.backgroundColor = "white";
             }
-
 
             let fig = document.createElement('figure');
             fig.className = "gameFig";
@@ -98,7 +98,6 @@ async function fetchGameScore() {
         gameRatings.push([data[i].gameID, data[i].averageScore]);
     }
 
-    console.log(gameRatings);
 }
 
 function goToReviews(gameID){

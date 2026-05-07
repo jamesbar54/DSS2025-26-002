@@ -117,9 +117,31 @@ async function loadReviews(){
     .catch(error => console.error('Error fetching search results:', error));
 }
 
+function fetchGames(){
+    fetch(`/game`)
+    .then(response => {
+            if (!response.ok) {
+                console.error('Server returned an error:', response.statusText);
+                throw new Error('Failed to fetch search results');
+            }
+            return response.json();
+        })
+    .then(data => {
+    let gameSelect = document.getElementById("title_field");
+        data.forEach(game => {
+            let option = document.createElement("option");
+            option.value = game.gameName;
+            option.textContent = game.gameName;
+            gameSelect.appendChild(option);
+        });
+    })
+    .catch(error => console.error('Error fetching search results:', error));
+}
+
 if(document.getElementById('myPosts') != null){
     loadPosts();
 } else if(document.getElementById('myReviews') != null){
+    fetchGames();
     loadReviews();
 }
 
