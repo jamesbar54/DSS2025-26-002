@@ -235,7 +235,7 @@ app.get('/getmyreviews', async (req, res) => {
 
 app.get('/getusername', async (req, res) => {
     try{
-        var userID = req.user.userID;
+        var userID = req.user?.userID;
 
         await client.query('SET SEARCH_PATH TO "gameBlog", public;')
 
@@ -252,7 +252,13 @@ app.get('/getusername', async (req, res) => {
 
 app.post(`/deleteuser`, async function(req, res){
     try{
-        var userID = req.user.userID;
+        var userID = req.user?.userID;
+
+        req.session.destroy((err) =>{
+            if(err) console.error(err);
+        });
+
+        res.clearCookie('connect.sid', {path: '/'});
 
         await client.query('SET SEARCH_PATH TO "gameBlog", public;')
 
@@ -264,17 +270,19 @@ app.post(`/deleteuser`, async function(req, res){
 
         await client.query(`DELETE FROM "UsersTable" WHERE "userID" = $1;`, [userID]);
 
+        // res.redirect('/html/login.html');
+        res.sendFile(__dirname + '/public/html/login.html', (err) => {
+            console.log("does this run");
+            if (err){
+                console.log(err);
+            }
+        })
+
         await client.query(`COMMIT`);
 
+        
+
         //Could not figure out how to redirect or delete seesion id
-
-        // req.session.destroy();
-
-        // res.sendFile(__dirname + '/public/html/login.html', (error) => {
-        //     if (error){
-        //         console.log(error);
-        //     }
-        // });
 
     }catch(err){
         await client.query('ROLLBACK');

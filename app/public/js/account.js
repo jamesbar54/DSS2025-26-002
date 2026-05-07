@@ -36,6 +36,8 @@ function DeleteAccount()
             throw new Error('Failed to delete account');
         }
     })
+
+    window.location = "../html/login.html"
 }
 
 
