@@ -154,12 +154,20 @@ app.get('/auth/google/callback',
 
 // Landing page
 app.get('/', (req, res) => {
-    /// send the static file
-    res.sendFile(__dirname + '/public/html/login.html', (err) => {
-        if (err){
-            console.log(err);
-        }
-    })
+    if(req.user?.userID == null){
+         /// send the static file
+        res.sendFile(__dirname + '/public/html/login.html', (err) => {
+            if (err){
+                console.log(err);
+            }
+        })
+    }  else{
+        res.sendFile(__dirname + '/public/html/index.html', (err) => {
+            if (err){
+                console.log(err);
+            }
+        })
+    } 
 });
 
 app.get('/game', (req, res) => {
@@ -260,8 +268,10 @@ app.get('/getusername', async (req, res) => {
         const getUsename = await client.query(`select "userName" from "UsersTable" WHERE "userID" = $1`, [userID]);
 
         if(getUsename.rowCount == 1){
-            res.status(200).json(getUsename.rows);
-        }
+            res.status(200).json(getUsename.rows[0]);
+        }else(
+            res.status(200).json("Logged out")
+        )
     }catch(err){
         console.error(err);
         res.status(500).json({error: "There was an error with the server"})
@@ -287,14 +297,6 @@ app.post(`/deleteuser`, async function(req, res){
         await client.query(`DELETE FROM "UserPassSaltsTable" WHERE "userID" = $1;`, [userID]);
 
         await client.query(`DELETE FROM "UsersTable" WHERE "userID" = $1;`, [userID]);
-
-        // res.redirect('/html/login.html');
-        res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            console.log("does this run");
-            if (err){
-                console.log(err);
-            }
-        })
 
         await client.query(`COMMIT`);
 
@@ -647,6 +649,22 @@ function GenerateSalt()
 {
     return crypto.randomBytes(8).toString('hex');
 }
+
+app.post(`/logout`, async function(req, res){
+    try{
+        var userID = req.user?.userID;
+
+        req.session.destroy((err) =>{
+            if(err) console.error(err);
+        });
+
+        res.clearCookie('connect.sid', {path: '/'});
+    }catch(err){
+        console.error(err);
+        res.status(500).json({error: "There was an error with the server"})
+    }
+})
+
 
 // signup POST request
 app.post('/signup', limiter, async function(req, res){

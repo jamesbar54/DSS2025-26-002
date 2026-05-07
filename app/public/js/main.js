@@ -1,24 +1,56 @@
 // Function to add username in top right corner of every page after user has logged in
-async function displayUsername() {
-    // const response = await fetch("app/getuserdetails");
-    // const user_data = await response.json();
-
-    // document.querySelector("#login_link").textContent = user_data.username;
-
+async function onLoadDisplayUsername() 
+{
     fetch(`/getusername`)
-    .then(response => {
+    .then(async response => {
+        const resp = await response.json();
         if(!response.ok){
             console.error('Server returned an error:', response.statusText);
             throw new Error('Failed to fetch username results');
         }
 
-        return response.json();
+        return resp;
     })
-    .then(data => {
-        console.log(data[0].userName);
+    .then(data =>{
+        username = data.userName;
+        if(username != null && username != ''){
+             document.querySelector("#login_link").textContent = username;
+        } else{
+            document.querySelector("#login_link").textContent = "Logged Out";
+        }
 
-        document.querySelector("#login_link").textContent = data[0].userName;
-    });
+        if(document.querySelector("#account_text")){
+            document.querySelector("#account_text").textContent = username;
+        }
+       
+    })
 }
 
-displayUsername();
+onLoadDisplayUsername();
+
+function logoutAccount(){
+    fetch("/logout", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+        })
+    })
+    .then(response => {
+        if(!response.ok){
+            console.error('Server returned an error:', response.statusText);
+            throw new Error('Failed to logout');
+        }
+    })
+
+    window.location = "../html/login.html"
+}
+
+
+logoutButton = document.getElementById("logout_btn");
+
+logoutButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    logoutAccount();
+})
