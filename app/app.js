@@ -589,8 +589,29 @@ function CheckValidEmail(input)
 }
 
 //Function for checking password against a list of common passwords
+//also checks for whitespaces
+//Common password list obtained from:
+//https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10k-most-common.txt
 function CheckCommonPassword(input)
 {
+    if (/\s/.test(input))
+    {
+        return true;
+    }
+    else
+    {
+        const wholeText = fs.readFileSync("app/10k-most-common.txt", "utf-8");
+        const lines = wholeText.split("\n");
+
+        for (let i=0;i<lines.length;i++)
+        {
+            if (lines[i] === input)
+            {
+                return true;
+                break
+            }
+        }
+    }
     return false;
 }
 
