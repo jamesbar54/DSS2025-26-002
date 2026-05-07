@@ -761,7 +761,7 @@ app.post('/signup', limiter, async function(req, res){
         {
             await ExtraWait(startTime);
 
-            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badPassword"}));
 
             //console.log("SHORT PASSWORD");
 

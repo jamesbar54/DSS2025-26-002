@@ -28,8 +28,10 @@ async function checkSignupResult() {
                 error_msg.textContent = "There was an error with the server.";
                 break;
             case "badInputs":
-                error_msg.textContent = "Invalid username/email/password.";
+                error_msg.textContent = "Invalid username/email.";
                 break;
+            case "badPassword":
+                error_msg.textContent = "Invalid password.";
         }
         
         document.querySelector("#login_btn").parentNode.insertBefore(error_msg, document.querySelector("#login_btn"));
