@@ -22,7 +22,7 @@ async function checkSignupResult() {
                 error_msg.textContent = "Please fill out all fields.";
                 break;
             case "mismatchPasswords":
-                error_msg.textContent = "Password and Confirm Password do not match.";
+                error_msg.textContent = "Passwords do not match.";
                 break;
             case "serverError":
                 error_msg.textContent = "There was an error with the server.";
@@ -31,7 +31,7 @@ async function checkSignupResult() {
                 error_msg.textContent = "Invalid username/email.";
                 break;
             case "badPassword":
-                error_msg.textContent = "Invalid password.";
+                error_msg.textContent = "Password is too weak.";
         }
         
         document.querySelector("#login_btn").parentNode.insertBefore(error_msg, document.querySelector("#login_btn"));
