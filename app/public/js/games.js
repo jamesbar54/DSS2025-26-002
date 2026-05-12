@@ -102,7 +102,7 @@ async function fetchGameScore() {
 
 function goToReviews(gameID){
     console.log("You pressed on " + gameID)
-    window.location.href = `http://localhost:3000/html/game_reviews.html?g=${gameID}`;
+    window.location.href = `/html/game_reviews.html?g=${gameID}`;
 }
 
 // Function to filter posts on page using search bar
