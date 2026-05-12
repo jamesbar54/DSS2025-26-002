@@ -312,8 +312,6 @@ app.post(`/deleteuser`, async function(req, res){
 
 
 
-//does the same thing for signup info
-fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
 
 // Store who is currently logged in
 let currentUser = null;
@@ -353,9 +351,10 @@ app.post('/login', limiter, async function(req, res){
     var startTime = performance.now();
 
     // Get username and password entered from user
-    var username = req.body.username_input;
-    //console.log(username);
-    var password = req.body.password_input;
+    // var username = req.body.username_input;
+    // //console.log(username);
+    // var password = req.body.password_input;
+    const {username, password} = req.body;
 
     //console.log(password);
 
@@ -382,14 +381,14 @@ app.post('/login', limiter, async function(req, res){
                     //console.log("No username/email, or Oauth");
 
                     await ExtraWait(startTime);
-
+                    res.status(422).send({error: "Incorrect username/password"})
 
                     // Redirect back to login page
-                    res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                        if (err){
-                            console.log(err);
-                        }
-                    });
+                    // res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                    //     if (err){
+                    //         console.log(err);
+                    //     }
+                    // });
                 }
                 else
                 {
@@ -408,13 +407,14 @@ app.post('/login', limiter, async function(req, res){
                             //console.log("No password/salt");
 
                             await ExtraWait(startTime);
+                            res.status(500).send({error: "There was an error with the server"})
 
                             // Redirect back to login page
-                            res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                                if (err){
-                                    console.log(err);
-                                }
-                            });
+                            // res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                            //     if (err){
+                            //         console.log(err);
+                            //     }
+                            // });
                         }
                         else
                         {
@@ -462,13 +462,14 @@ app.post('/login', limiter, async function(req, res){
                                 //console.log("incorrect password");
 
                                 await ExtraWait(startTime);
+                                res.status(422).send({error: "Incorrect username/password"})
 
                                 // Redirect back to login page
-                                res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                                    if (err){
-                                        console.log(err);
-                                    }
-                                });
+                                // res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                                //     if (err){
+                                //         console.log(err);
+                                //     }
+                                // });
                             }
                         }
                     });
@@ -635,25 +636,27 @@ app.post('/signup', limiter, async function(req, res){
     var startTime = performance.now();
 
     //gets inputted fields
-    var username = req.body.username_input;
-    var email = req.body.email_input;
-    var password = req.body.password_input;
-    var passwordC = req.body.passwordConfirm_input;
+    // var username = req.body.username_input;
+    // var email = req.body.email_input;
+    // var password = req.body.password_input;
+    // var passwordC = req.body.passwordConfirm_input;
+    const {username, email, password, passwordC} = req.body;
 
     //check if any null fields
     if (username === "" || email === "" || password === "" || passwordC === "")
     {
         await ExtraWait(startTime);
+        res.status(422).send({error: "Please fill in all fields"})
 
-        fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"nullFields"}));
+        //fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"nullFields"}));
 
         //console.log("NULL FIELDS"); //These console.logs are temporary and for debugging
         // Redirect to signup
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
+        // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+        //     if (err){
+        //         console.log(err);
+        //     }
+        // });
     }
 
     //The next 4 checks should all have the same error message (invalid inputs) to avoid account enumeration
@@ -663,31 +666,33 @@ app.post('/signup', limiter, async function(req, res){
     else if((username.length > 32) || CheckValidEmail(username))
     {
         await ExtraWait(startTime);
+        res.status(422).send({error: "Invalid username/email"})
 
-        fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+        // fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-        //console.log("BAD USERNAME");
+        // //console.log("BAD USERNAME");
 
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
+        // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+        //     if (err){
+        //         console.log(err);
+        //     }
+        // });
     }
     //check if email is valid (length, VALID EMAIL)
     else if((email.length > 320) || !CheckValidEmail(email))
     {
         await ExtraWait(startTime);
+        res.status(422).send({error: "Invalid username/email"})
 
-        fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+        // fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-        //console.log("BAD EMAIL");
+        // //console.log("BAD EMAIL");
 
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
+        // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+        //     if (err){
+        //         console.log(err);
+        //     }
+        // });
     }
 
     //check if username or email is already taken
@@ -711,62 +716,66 @@ app.post('/signup', limiter, async function(req, res){
         if (numberOfMatches === -1) // database error
         {
             await ExtraWait(startTime);
+            res.status(500).send({error: "There was an error with the server"})
 
-            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
+            // fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
 
-            //console.log("DATABASE ERROR");
+            // //console.log("DATABASE ERROR");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
-            });
+            // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            //     if (err){
+            //         console.log(err);
+            //     }
+            // });
         }
         else if (numberOfMatches !== 0) // other users with the same name/email
         {
             await ExtraWait(startTime);
+            res.status(422).send({error: "Invalid username/email"})
             
-            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
+            // fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badInputs"}));
 
-            //console.log("EXISTING NAME OR EMAIL");
+            // //console.log("EXISTING NAME OR EMAIL");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
-            });
+            // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            //     if (err){
+            //         console.log(err);
+            //     }
+            // });
         }
     
         //check if password is valid (length, check against common passwords)
         else if((password.length < 12) || CheckCommonPassword(password))
         {
             await ExtraWait(startTime);
+            res.status(422).send({error: "Weak password"})
 
-            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badPassword"}));
+            // fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"badPassword"}));
 
-            //console.log("SHORT PASSWORD");
+            // //console.log("SHORT PASSWORD");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
-            });
+            // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            //     if (err){
+            //         console.log(err);
+            //     }
+            // });
         }
 
         //check if passwords don't match
         else if(password !== passwordC)
         {
             await ExtraWait(startTime);
+            res.status(422).send({error: "Passwords don't match"})
 
-            fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"mismatchPasswords"}));
+            //fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"mismatchPasswords"}));
 
             //console.log("MISMATCHING PASSWORDS");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
-            });
+            // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+            //     if (err){
+            //         console.log(err);
+            //     }
+            // });
         }
 
         else
@@ -833,7 +842,7 @@ app.post('/signup', limiter, async function(req, res){
 
                 await ExtraWait(startTime);
 
-                fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
+                //fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
 
                 //console.log("GREAT SUCCESS");
 
@@ -866,15 +875,16 @@ app.post('/signup', limiter, async function(req, res){
                 await ExtraWait(startTime);
 
                 console.error(error);
-                fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
+                res.status(500).send({error: "There was an error with the server"})
+                // fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"serverError"}));
 
-                //console.log("DATABASE ERROR BUT VALID INFO");
+                // //console.log("DATABASE ERROR BUT VALID INFO");
 
-                res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                    if (err){
-                        console.log(err);
-                    }
-                });
+                // res.sendFile(__dirname + '/public/html/signup.html', (err) => {
+                //     if (err){
+                //         console.log(err);
+                //     }
+                // });
             }  
         }
     }
