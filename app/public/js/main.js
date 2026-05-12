@@ -17,6 +17,9 @@ async function onLoadDisplayUsername()
              document.querySelector("#login_link").textContent = username;
         } else{
             document.querySelector("#login_link").textContent = "Logged Out";
+
+            document.getElementById("account_btn").remove();
+            document.getElementById("logout_btn").textContent = "Log In";
         }
 
         if(document.querySelector("#account_text")){
