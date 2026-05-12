@@ -9,6 +9,7 @@ const passport = require('passport'); //middleware library to handle oauth
 const GoogleStrategy = require('passport-google-oauth20').Strategy; //oauth passport strategy
 const session = require('express-session'); //session management
 const rateLimit = require('express-rate-limit')
+const ejs = require('ejs');
 
 const limiter = rateLimit({
 	windowMs: 3 * 60 * 1000, // 3 minutes
@@ -43,6 +44,9 @@ app.use(express.static(__dirname + '/public'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.set('view engine', 'ejs');
+app.set('views', __dirname + '/public/html');
+app.engine('html', require('ejs').renderFile);
 
 //Session middleware config
 app.use(session({
@@ -68,6 +72,9 @@ passport.deserializeUser(async(id,done) => {
         const result = await client.query(
             `SELECT * FROM "UsersTable" WHERE "userID" = $1`, [id]
         );
+        if (result.rows.length === 0){
+            return done(null,false);
+        }
         done(null,result.rows[0]); //attach user row to req.user
     } catch (err) {
         done(err,null); //using passports error handler
@@ -153,22 +160,22 @@ app.get('/auth/google/callback',
 
 
 // Landing page
-app.get('/', (req, res) => {
-    if(req.user?.userID == null){
-         /// send the static file
-        res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        })
-    }  else{
-        res.sendFile(__dirname + '/public/html/index.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        })
-    } 
-});
+// app.get('/', (req, res) => {
+//     if(req.user?.userID == null){
+//          /// send the static file
+//         res.sendFile(__dirname + '/public/html/login.html', (err) => {
+//             if (err){
+//                 console.log(err);
+//             }
+//         })
+//     }  else{
+//         res.sendFile(__dirname + '/public/html/index.html', (err) => {
+//             if (err){
+//                 console.log(err);
+//             }
+//         })
+//     } 
+// });
 
 app.get('/game', (req, res) => {
 
@@ -284,9 +291,11 @@ app.post(`/deleteuser`, async function(req, res){
 
         req.session.destroy((err) =>{
             if(err) console.error(err);
+            res.clearCookie('connect.sid', {path: '/'});
+            res.redirect('/')
         });
 
-        res.clearCookie('connect.sid', {path: '/'});
+        
 
         await client.query('SET SEARCH_PATH TO "gameBlog", public;')
 
@@ -299,10 +308,6 @@ app.post(`/deleteuser`, async function(req, res){
         await client.query(`DELETE FROM "UsersTable" WHERE "userID" = $1;`, [userID]);
 
         await client.query(`COMMIT`);
-
-        
-
-        //Could not figure out how to redirect or delete seesion id
 
     }catch(err){
         await client.query('ROLLBACK');
@@ -355,6 +360,11 @@ async function ExtraWait(input)
 // Login POST request
 app.post('/login', limiter, async function(req, res){
 
+    //csrf check
+    if(req.body.csrf_token !== req.session.csrfToken) {
+        return res.status(403).send('Invalid CSRF token');
+    }
+
     //console.time("a");
     var startTime = performance.now();
 
@@ -395,10 +405,11 @@ app.post('/login', limiter, async function(req, res){
                     fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
                     // Redirect back to login page
-                    res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                        if (err){
-                            console.log(err);
-                        }
+                    const token = crypto.randomBytes(32).toString('hex');
+                    req.session.csrfToken = token;
+                    req.session.save((err) => {
+                        if(err) console.error(err);
+                        res.render('login.html', { token });
                     });
                 }
                 else
@@ -425,10 +436,11 @@ app.post('/login', limiter, async function(req, res){
                             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
                             // Redirect back to login page
-                            res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                                if (err){
-                                    console.log(err);
-                                }
+                            const token = crypto.randomBytes(32).toString('hex');
+                            req.session.csrfToken = token;
+                            req.session.save((err) => {
+                                if(err) console.error(err);
+                                res.render('login.html', { token });
                             });
                         }
                         else
@@ -460,6 +472,17 @@ app.post('/login', limiter, async function(req, res){
                                 );
                                 const user = userResult.rows[0];
 
+                                //null check
+                                if(!user) {
+                                    const token = crypto.randomBytes(32).toString('hex');
+                                    req.session.csrfToken = token;
+                                    req.session.save((err) => {
+                                        if(err) console.error(err);
+                                        res.render('login.html', { token });
+                                    });
+                                    return;
+                                }
+
 
                                 // Update current user upon successful login
                                 currentUser = req.body.username_input;
@@ -489,10 +512,11 @@ app.post('/login', limiter, async function(req, res){
                                 fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
                                 // Redirect back to login page
-                                res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                                    if (err){
-                                        console.log(err);
-                                    }
+                                const token = crypto.randomBytes(32).toString('hex');
+                                req.session.csrfToken = token;
+                                req.session.save((err) => {
+                                    if(err) console.error(err);
+                                    res.render('login.html', { token });
                                 });
                             }
                         }
@@ -656,9 +680,12 @@ app.post(`/logout`, async function(req, res){
 
         req.session.destroy((err) =>{
             if(err) console.error(err);
+            res.clearCookie('connect.sid', {path: '/'});
+            res.redirect('/');
+
         });
 
-        res.clearCookie('connect.sid', {path: '/'});
+        
     }catch(err){
         console.error(err);
         res.status(500).json({error: "There was an error with the server"})
@@ -668,6 +695,11 @@ app.post(`/logout`, async function(req, res){
 
 // signup POST request
 app.post('/signup', limiter, async function(req, res){
+
+    //csrf check
+    if (req.body.csrf_token !== req.session.csrfToken) {
+        return res.status(403).send('Invalid CSRF token');
+    }
 
     var startTime = performance.now();
 
@@ -686,10 +718,11 @@ app.post('/signup', limiter, async function(req, res){
 
         //console.log("NULL FIELDS"); //These console.logs are temporary and for debugging
         // Redirect to signup
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
+        const token = crypto.randomBytes(32).toString('hex');
+        req.session.csrfToken = token;
+        req.session.save((err) => {
+            if(err) console.error(err);
+            res.render('signup.html', { token });
         });
     }
 
@@ -705,10 +738,11 @@ app.post('/signup', limiter, async function(req, res){
 
         //console.log("BAD USERNAME");
 
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
+        const token = crypto.randomBytes(32).toString('hex');
+        req.session.csrfToken = token;
+        req.session.save((err) => {
+            if(err) console.error(err);
+            res.render('signup.html', { token });
         });
     }
     //check if email is valid (length, VALID EMAIL)
@@ -720,11 +754,12 @@ app.post('/signup', limiter, async function(req, res){
 
         //console.log("BAD EMAIL");
 
-        res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-            if (err){
-                console.log(err);
-            }
-        });
+        const token = crypto.randomBytes(32).toString('hex');
+        req.session.csrfToken = token;
+        req.session.save((err) => {
+                if(err) console.error(err);
+                res.render('signup.html', { token });
+            });
     }
 
     //check if username or email is already taken
@@ -753,10 +788,11 @@ app.post('/signup', limiter, async function(req, res){
 
             //console.log("DATABASE ERROR");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
+            const token = crypto.randomBytes(32).toString('hex');
+            req.session.csrfToken = token;
+            req.session.save((err) => {
+                if(err) console.error(err);
+                res.render('signup.html', { token });
             });
         }
         else if (numberOfMatches !== 0) // other users with the same name/email
@@ -767,10 +803,11 @@ app.post('/signup', limiter, async function(req, res){
 
             //console.log("EXISTING NAME OR EMAIL");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
+            const token = crypto.randomBytes(32).toString('hex');
+            req.session.csrfToken = token;
+           req.session.save((err) => {
+                if(err) console.error(err);
+                res.render('signup.html', { token });
             });
         }
     
@@ -783,10 +820,11 @@ app.post('/signup', limiter, async function(req, res){
 
             //console.log("SHORT PASSWORD");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
+            const token = crypto.randomBytes(32).toString('hex');
+            req.session.csrfToken = token;
+            req.session.save((err) => {
+                if(err) console.error(err);
+                res.render('signup.html', { token });
             });
         }
 
@@ -799,10 +837,11 @@ app.post('/signup', limiter, async function(req, res){
 
             //console.log("MISMATCHING PASSWORDS");
 
-            res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                if (err){
-                    console.log(err);
-                }
+            const token = crypto.randomBytes(32).toString('hex');
+            req.session.csrfToken = token;
+            req.session.save((err) => {
+                if(err) console.error(err);
+                res.render('signup.html', { token });
             });
         }
 
@@ -875,10 +914,11 @@ app.post('/signup', limiter, async function(req, res){
                 //console.log("GREAT SUCCESS");
 
                 //TEMPORARY - send you to login page to login to your new account
-                res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                    if (err){
-                        console.log(err);
-                    }
+                const token = crypto.randomBytes(32).toString('hex');
+                req.session.csrfToken = token;
+                req.session.save((err) => {
+                    if(err) console.error(err);
+                    res.render('login.html', { token });
                 });
 
             } catch (error) {
@@ -889,14 +929,39 @@ app.post('/signup', limiter, async function(req, res){
 
                 //console.log("DATABASE ERROR BUT VALID INFO");
 
-                res.sendFile(__dirname + '/public/html/signup.html', (err) => {
-                    if (err){
-                        console.log(err);
-                    }
+                const token = crypto.randomBytes(32).toString('hex');
+                req.session.csrfToken = token;
+                req.session.save((err) => {
+                    if(err) console.error(err);
+                    res.render('signup.html', { token });
                 });
+                
             }  
         }
     }
+});
+
+//csrf token generation and page addition
+app.get('/',(req, res) => {
+    if (req.user?.userID == null){
+        const token = crypto.randomBytes(32).toString('hex');
+        req.session.csrfToken = token;
+        req.session.save((err) => {
+            if (err) console.error(err);
+            res.render('login.html', { token });
+        });
+    } else {
+        res.sendFile(__dirname + '/public/html/index.html');
+    }
+});
+//signup page route
+app.get('/signup', (req, res) => {
+    const token = crypto.randomBytes(32).toString('hex');
+    req.session.csrfToken = token;
+    req.session.save((err) => {
+        if (err) console.error(err);
+        res.render('signup.html', { token });
+    });
 });
 
 // Make a post POST request
