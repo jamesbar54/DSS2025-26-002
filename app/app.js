@@ -837,12 +837,30 @@ app.post('/signup', limiter, async function(req, res){
 
                 //console.log("GREAT SUCCESS");
 
-                //TEMPORARY - send you to login page to login to your new account
-                res.sendFile(__dirname + '/public/html/login.html', (err) => {
-                    if (err){
-                        console.log(err);
+
+                //fetch full user row
+                const userResult = await client.query(
+                    `SELECT * FROM "UsersTable" WHERE "userID" = $1`, [newUserID]
+                );
+                const user = userResult.rows[0];
+
+
+                // Update current user upon successful login
+                currentUser = req.body.username_input;
+
+                req.login(user,(err) =>{
+                    if(err){
+                        console.error(err);
+                        return res.status(500).send('Login error');
                     }
-                });
+                    res.redirect('/html/index.html');
+                }); 
+                //TEMPORARY - send you to login page to login to your new account
+                // res.sendFile(__dirname + '/public/html/login.html', (err) => {
+                //     if (err){
+                //         console.log(err);
+                //     }
+                // });
 
             } catch (error) {
                 await ExtraWait(startTime);
