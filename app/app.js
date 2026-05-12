@@ -144,8 +144,6 @@ app.get('/auth/google/callback',
     passport.authenticate('google', {failureRedirect: '/'}),
     (req, res) => {
         currentUser = req.user.userName;
-        let login_attempt = {"username": req.user.userEmail, "password": "null", "success": true };
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', JSON.stringify(login_attempt));
        res.redirect('/html/index.html');
     }
 );
@@ -313,10 +311,6 @@ app.post(`/deleteuser`, async function(req, res){
 })
 
 
-// Reset login_attempt.json when server restarts
-let login_attempt = {"username" : "null", "password" : "null", "success":false};
-let data = JSON.stringify(login_attempt);
-fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
 //does the same thing for signup info
 fs.writeFileSync(__dirname + '/public/json/signup_result.json', JSON.stringify({"result":"null"}));
@@ -389,10 +383,6 @@ app.post('/login', limiter, async function(req, res){
 
                     await ExtraWait(startTime);
 
-                    //Update login_attempt with credentials used to log in
-                    let login_attempt = {"username" : username, "password" : password, "success":false};
-                    let data = JSON.stringify(login_attempt);
-                    fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
                     // Redirect back to login page
                     res.sendFile(__dirname + '/public/html/login.html', (err) => {
@@ -419,11 +409,6 @@ app.post('/login', limiter, async function(req, res){
 
                             await ExtraWait(startTime);
 
-                            // Update login_attempt with credentials used to log in
-                            let login_attempt = {"username" : username, "password" : password, "success":false};
-                            let data = JSON.stringify(login_attempt);
-                            fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
                             // Redirect back to login page
                             res.sendFile(__dirname + '/public/html/login.html', (err) => {
                                 if (err){
@@ -447,11 +432,6 @@ app.post('/login', limiter, async function(req, res){
                                 //console.log("correct password");
 
                                 await ExtraWait(startTime);
-
-                                // Update login_attempt with credentials
-                                let login_attempt = {"username" : username, "password" : password, "success":true};
-                                let data = JSON.stringify(login_attempt);
-                                fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
 
                                 //fetch full user row
@@ -482,11 +462,6 @@ app.post('/login', limiter, async function(req, res){
                                 //console.log("incorrect password");
 
                                 await ExtraWait(startTime);
-
-                                // Update login_attempt with credentials used to log in
-                                let login_attempt = {"username" : username, "password" : password, "success":false};
-                                let data = JSON.stringify(login_attempt);
-                                fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
                                 // Redirect back to login page
                                 res.sendFile(__dirname + '/public/html/login.html', (err) => {
@@ -534,10 +509,7 @@ app.post('/login', limiter, async function(req, res){
         //         console.log(resp.rowCount)
 
         //         if(resp.rowCount == 1){
-        //             // Update login_attempt with credentials
-        //             let login_attempt = {"username" : username, "password" : password, "success":true};
-        //             let data = JSON.stringify(login_attempt);
-        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+        //             // Update login_attempt with credentials;
 
         //             // Update current user upon successful login
         //             currentUser = req.body.username_input;
@@ -550,9 +522,6 @@ app.post('/login', limiter, async function(req, res){
         //             })
         //         }else if(resp.rowCount == 0){
         //             // Update login_attempt with credentials used to log in
-        //             let login_attempt = {"username" : username, "password" : password, "success":false};
-        //             let data = JSON.stringify(login_attempt);
-        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
         //             // Redirect back to login page
         //             res.sendFile(__dirname + '/public/html/login.html', (err) => {
@@ -575,9 +544,6 @@ app.post('/login', limiter, async function(req, res){
 
         //         if(resp.rowCount == 1){
         //             // Update login_attempt with credentials
-        //             let login_attempt = {"username" : username, "password" : password, "success":true};
-        //             let data = JSON.stringify(login_attempt);
-        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
         //             // Update current user upon successful login
         //             currentUser = req.body.username_input;
@@ -590,9 +556,6 @@ app.post('/login', limiter, async function(req, res){
         //             })
         //         }else if(resp.rowCount == 0){
         //             // Update login_attempt with credentials used to log in
-        //             let login_attempt = {"username" : username, "password" : password, "success":false};
-        //             let data = JSON.stringify(login_attempt);
-        //             fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
         //             // Redirect back to login page
         //             res.sendFile(__dirname + '/public/html/login.html', (err) => {

@@ -1,7 +1,7 @@
 // Update error message based on login attempt
 async function checkLoginAttempts() {
-    const response = await fetch("../json/login_attempt.json");
-    const form_data = await response.json();
+    // const response = await fetch("../json/login_attempt.json");
+    // const form_data = await response.json();
 
     // Inform user they need to fill out the fields on the login form
     if(form_data.username === "null" || form_data.password === "null") {
