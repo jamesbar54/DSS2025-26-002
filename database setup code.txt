@@ -112,3 +112,10 @@ ALTER TABLE IF EXISTS "PostsTable"
 ALTER TABLE "UsersTable" ALTER COLUMN "userPassHash" DROP NOT NULL;
 
 ALTER TABLE "UsersTable" ADD COLUMN "oauthProvider" character varying(32) DEFAULT NULL;
+
+
+
+ALTER TABLE "GamesTable" ADD COLUMN "gameImgUrl" VARCHAR(256) NOT NULL;
+ALTER TABLE "UsersTable" ALTER COLUMN "userPassHash" TYPE VARCHAR;
+ALTER TABLE "PostsTable" ALTER COLUMN "userID" DROP NOT NULL;
+
