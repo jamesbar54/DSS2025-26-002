@@ -45,10 +45,9 @@ function logoutAccount(){
             console.error('Server returned an error:', response.statusText);
             throw new Error('Failed to logout');
         }
-        window.location.href = "/"
     })
 
-    
+    window.location = "../html/login.html"
 }
 
 
