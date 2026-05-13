@@ -20,7 +20,7 @@ const limiter = rateLimit({
 })
 
 
-const crypto = require('crypto'); //Node.js module for hashing / random number generating
+const crypto = require('crypto'); //Node.js module for hashing / random number generating. Used for randomly generating salts
 const argon2 = require('argon2'); //for hashing
 
 //Database connection
@@ -317,9 +317,10 @@ app.post(`/deleteuser`, async function(req, res){
 let currentUser = null;
 
 //Function for hashing an input string
-//currently does literally nothing
 async function HashString(input)
 {
+    //Uses argon2.hash. This uses argon2id, version 1.3, default values (3 passes, 4 threads, 64MB memory)
+    //argon2.hash also randomly-generates its own salt. This is all stored in the hashed string
     const hashOut = await argon2.hash(input);
     return hashOut;
 }
@@ -425,7 +426,8 @@ app.post('/login', limiter, async function(req, res){
                             //console.log("hash: " + passHash);
 
 
-                            //Use argon2's function to check if the hash is correct
+                            //Use argon2.verify to check if password's correct
+                            //Obtains salt/passes/etc from hashed string, uses to hash input and check for match
                             if (await argon2.verify(passHash, (password + salt)))
                             {
                                 // password match
@@ -609,6 +611,7 @@ function CheckCommonPassword(input)
 }
 
 //function for randomly generating a 16-character string for the Salt
+//Uses crypto.randomBytes instead of Random because 1. the output is less guessable and 2. entropy is incorporated
 function GenerateSalt()
 {
     return crypto.randomBytes(8).toString('hex');
