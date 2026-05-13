@@ -16,6 +16,8 @@
         <p>Please enter your username and password to continue, or click "sign up" to make a new account.</p>
 
         <form method="post" action="/login" id="login_form">
+            <input type="hidden" name="csrf_token" value="<%= token %>" >
+
             <label for="username_input">Username:</label>
             <input type="text" id="username_input" name="username_input" placeholder="Please enter your username...">
 
@@ -25,7 +27,7 @@
             <button id="login_btn" type="submit">Log in</button>
         </form>
 
-        <a href="../html/signup.html" class="button">sign up</a>
+        <a href="/signup" class="button">sign up</a>
         <a href="/auth/google" id="google_btn">Login with Google</a>
         <a href="../html/index.html" class="button">Continue as guest</a>
         <div id="errortext" class="error"></div>
