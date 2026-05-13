@@ -9,7 +9,6 @@ async function loadPosts() {
             return response.json();
         })
     .then(data => {
-        console.log("ghrsgjawrseghjweaghijk")
         let postList = document.getElementById('myPosts');
         for(let i = 0; i < data.length; i++) {
             let author = data[i].userName;
@@ -51,6 +50,20 @@ async function loadPosts() {
             contentContainer.textContent = content;
             figcap.appendChild(contentContainer);
 
+                        let deletebtnwrapper = document.createElement('p')
+            let deletebtn = document.createElement('a')
+
+            deletebtnwrapper.className = 'deletebtnwrapper'
+            deletebtn.className = 'delete_btn'
+            deletebtn.textContent = 'Delete Post'
+           
+            deletebtn.addEventListener("click", function(){
+                deletePost(postID)
+            })
+
+            deletebtnwrapper.appendChild(deletebtn)
+            postContainer.appendChild(deletebtnwrapper)
+            postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
             postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
     }
         
@@ -110,6 +123,19 @@ async function loadReviews(){
             ratingContainer.textContent = rating;
             figcap.appendChild(ratingContainer);
 
+            let deletebtnwrapper = document.createElement('p')
+            let deletebtn = document.createElement('a')
+
+            deletebtnwrapper.className = 'deletebtnwrapper'
+            deletebtn.className = 'delete_btn'
+            deletebtn.textContent = 'Delete Post'
+
+            deletebtn.addEventListener("click", function(){
+                deletePost(postID)
+            })
+
+            deletebtnwrapper.appendChild(deletebtn)
+            postContainer.appendChild(deletebtnwrapper)
             postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
     }
         
@@ -147,26 +173,34 @@ if(document.getElementById('myPosts') != null){
 
 
 // Function to remove a post from the page after clicking delete - this is also reflected on the server side
-function deletePost(e) {
+function deletePost(postid) {
+    const post = postid;
+    console.log(post)
+    fetch("/deletepost", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            postID: post
+        })
+    })
+    .then(async response => {
 
-    // Put post in object to be the body of fetch request
-    const post = {
-        postId:document.getElementsByTagName('h6')[0].textContent, 
-    };
+    if(response.status == '201'){
 
-    const requestHeaders = {
-        "Content-Type": "application/json"
-    };
+        location.reload();
 
-    // Delete post
-  fetch('/deletepost', {
-    method: 'POST',
-    headers: requestHeaders,
-    body:JSON.stringify(post)
-  });
+        
+    }
+    response.json()})
+    .then(data => {
+        console.log("it work yippee")
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
 
-  // Hide element on button click so deletion appears immediate
-  e.target.parentNode.hidden = true;
 }
 
 // Function to edit post

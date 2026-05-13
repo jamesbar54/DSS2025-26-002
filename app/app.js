@@ -955,20 +955,22 @@ app.post('/makepost', limiter, async function(req, res) {
  })
 
  // Delete a post POST request
- app.post('/deletepost', (req, res) => {
-
-    // Read in current posts
-    const json = fs.readFileSync(__dirname + '/public/json/posts.json');
-    var posts = JSON.parse(json);
-
-    // Find post with matching ID and delete it
-    let index = posts.findIndex(item => item.postId == req.body.postId);
-    posts.splice(index, 1);
-
-    // Update posts.json
-    fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
-
-    res.sendFile(__dirname + "/public/html/my_posts.html");
+ app.post('/deletepost', async (req, res) => {
+    const {postID} = req.body;
+    console.log(postID)
+    try{
+        await client.query('SET SEARCH_PATH TO "gameBlog", public;')
+        const userID = req.user?.userID;
+        if(userID == null){
+            return res.status(403).json({ error: "Not logged in" });
+        }
+        const deletePost = `DELETE FROM "PostsTable" WHERE "postID" = $1`;
+        await client.query(deletePost, [postID])
+        res.status(201).send("Deleted successfully")
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ error: "There was an error with the server" });
+    }
  });
 
 app.listen(port, () => {

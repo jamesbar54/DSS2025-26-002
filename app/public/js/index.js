@@ -8,7 +8,7 @@ async function loadLatestPosts() {
             postList.removeChild(postList.children[i]);
         }
     }
-
+    
     // Load latest 2 posts
     fetch(`/getposts`)
     .then(response => {

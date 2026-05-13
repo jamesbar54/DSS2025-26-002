@@ -73,8 +73,8 @@ async function getPosts(){
             return response.json();
         })
     .then(data => {
-        console.log(data)
-
+        console.table(data)
+        
         let postList = document.getElementById('postsList');
         for(let i = 0; i < data.length; i++) {
             let author = data[i].userName;
@@ -92,13 +92,13 @@ async function getPosts(){
             postContainer.classList.add("post");
             let fig = document.createElement('figure');
             postContainer.appendChild(fig);
-
+            
             let postIdContainer = document.createElement("p");
             postIdContainer.textContent = postID;
             postIdContainer.hidden = true;
             postID.id = "postId";
             postContainer.appendChild(postIdContainer);
-
+            
             let img = document.createElement('img');
             let figcap = document.createElement('figcaption');
             fig.appendChild(img);

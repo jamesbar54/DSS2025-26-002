@@ -6,6 +6,10 @@ function createPost(){
     if(document.getElementById("rating_select") != null){
         rating = document.getElementById("rating_select").value;
     }
+    if((title == '' && content == '') || title == ''){
+        document.getElementById("errortext").textContent = 'Invalid post. Content Missing.';
+        return;
+    }
     fetch("/makepost", {
         method: "POST",
         headers: {
@@ -25,12 +29,13 @@ function createPost(){
             throw new Error(err);
         }
     if(response.status == '201'){
+        document.getElementById("errortext").textContent = '';
         document.getElementById("successtext").textContent = resp;
         if(postType == 'Standard'){
-            title.value = "";
-            content.value = "";
+            document.getElementById("title_field").value = '';
+            document.getElementById("content_field").value = '';
         }else{
-            content.value = "";
+            document.getElementById("content_field").value = '';
         }
         
         setTimeout(() => {
