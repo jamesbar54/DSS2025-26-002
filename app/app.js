@@ -1004,7 +1004,7 @@ app.post('/makepost', limiter, async function(req, res) {
         }
         // Selects everything from postsTable, username ONLY from userstable and does it with the userID from the poststable
         // It joins the 2 tables to get the username from userstable since posts only store userID
-        const getPosts = `SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Standard';`;
+        const getPosts = `SELECT "PostsTable".*, "UsersTable"."userName" FROM "PostsTable" JOIN "UsersTable" ON "PostsTable"."userID" = "UsersTable"."userID" WHERE "PostsTable"."postType" = 'Standard' ORDER BY Timestamp Desc;`;
         
         client.query(getPosts, async (err, resp) => {
             if (err) {

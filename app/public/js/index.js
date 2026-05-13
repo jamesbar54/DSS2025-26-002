@@ -21,7 +21,7 @@ async function loadLatestPosts() {
     .then(data => {
         console.log(data)
         let postList = document.getElementById('postsList');
-        for(let i = data.length - 1; i > data.length - 3; i--) {
+        for(let i = 0; i < 2; i++) {
             let author = data[i].userName;
             let time = data[i].timestamp;
             let date = new Date(time)
